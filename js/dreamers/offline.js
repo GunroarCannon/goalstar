@@ -169,6 +169,19 @@ const TEMPLATES = [
 ];
 
 const avg = (a) => (a[3] + a[4] + a[5] + a[6]) / 4;
+const STEP_COUNT = { brief: 0, normal: 3, detailed: 4, deep: 5 };
+
+// A generic but useful checklist for any action (the offline dreamer has no world knowledge).
+function checklist(label, to, n = 4) {
+  const all = [
+    `Write down exactly what "${label}" involves: requirements, costs, deadlines`,
+    'Block time in your calendar and gather what you need',
+    `Do it: ${label}`,
+    'Ask someone who has done it to sanity-check your approach',
+    `Check you've really reached "${to}" — get it in writing if you can`,
+  ];
+  return n >= 5 ? all : all.filter((_, i) => i !== 3).slice(0, n);
+}
 const fill = (s, goal) => s.replaceAll('{goal}', goal);
 
 function pickTemplate(req) {
@@ -190,9 +203,15 @@ function remaining(t) {
   return dist;
 }
 
-function toAction(a, goal, from = a[0]) {
-  return { from, to: a[1], label: fill(a[2], goal), note: a[7] || '', time: a[3], money: a[4], effort: a[5], risk: a[6] };
+function toAction(a, goal, from = a[0], detail = 'normal', label = (k) => k) {
+  const text = fill(a[2], goal);
+  return {
+    from, to: a[1], label: text, note: a[7] || '', time: a[3], money: a[4], effort: a[5], risk: a[6],
+    duration: '', steps: checklist(text, label(a[1]), STEP_COUNT[detail] ?? 3),
+  };
 }
+
+const labeller = (t, goal) => (k) => (k === 'GOAL' ? goal : fill(t.states.find((s) => s[0] === k)?.[1] || 'the next state', goal));
 
 function dream(req) {
   const t = pickTemplate(req);
@@ -200,7 +219,7 @@ function dream(req) {
   const goal = req.goal.label;
   return {
     states: t.states.map(([key, label, note]) => ({ key, label: fill(label, goal), note, h: Math.round((h[key] ?? 10) * 10) / 10 })),
-    actions: t.actions.map((a) => toAction(a, goal)),
+    actions: t.actions.map((a) => toAction(a, goal, a[0], req.params?.detail, labeller(t, goal))),
   };
 }
 
@@ -218,7 +237,7 @@ function expand(req) {
       const keys = new Set(next.map((a) => a[1]));
       return {
         states: t.states.filter((s) => keys.has(s[0])).map(([key, label, note]) => ({ key, label: fill(label, goal), note, h: h[key] ?? 10 })),
-        actions: next.map((a) => toAction(a, goal, 'HERE')),
+        actions: next.map((a) => toAction(a, goal, 'HERE', req.params?.detail, labeller(t, goal))),
       };
     }
   }
@@ -238,7 +257,8 @@ function expand(req) {
       { from: 'HERE', to: 'x3', label: 'Ask three people who have done it', note: '', time: 2, money: 0, effort: 4, risk: 3 },
     ],
   };
-  if (!isStart) out.actions.push({ from: 'HERE', to: 'GOAL', label: `Final push to "${g}"`, note: 'Rough guess — break it down when you get here.', time: 6, money: 4, effort: 7, risk: 5 });
+  for (const a of out.actions) Object.assign(a, { duration: '', steps: [] });
+  if (!isStart) out.actions.push({ from: 'HERE', to: 'GOAL', label: `Final push to "${g}"`, note: 'Rough guess — break it down when you get here.', time: 6, money: 4, effort: 7, risk: 5, duration: '', steps: [] });
   return out;
 }
 
@@ -254,10 +274,19 @@ function breakdown(req) {
       { key: 'b2', label: `Halfway through: ${what}`, note: '', h: null },
     ],
     actions: [
-      { from: 'FROM', to: 'b1', label: 'Plan it: list sub-tasks, deadlines and what you need', note: '', ...cost },
-      { from: 'b1', to: 'b2', label: 'Do the first half', note: '', ...cost },
-      { from: 'b2', to: 'TO', label: 'Finish and verify it worked', note: '', ...cost },
+      { from: 'FROM', to: 'b1', label: 'Plan it: list sub-tasks, deadlines and what you need', note: '', ...cost, duration: '', steps: [] },
+      { from: 'b1', to: 'b2', label: 'Do the first half', note: '', ...cost, duration: '', steps: [] },
+      { from: 'b2', to: 'TO', label: 'Finish and verify it worked', note: '', ...cost, duration: '', steps: [] },
     ],
+  };
+}
+
+function detail(req) {
+  const e = req.focus.edge;
+  const n = Math.max(3, STEP_COUNT[req.params?.detail] || 4);
+  return {
+    states: [],
+    actions: [{ from: 'FROM', to: 'TO', label: e.label, note: e.note || '', ...e.cost, duration: '', steps: checklist(e.label, e.to, n) }],
   };
 }
 
@@ -266,8 +295,9 @@ export default {
   name: 'Offline',
   async generate(req) {
     if (req.mode === 'dream') return dream(req);
-    if (req.mode === 'expand') return expand(req);
+    if (req.mode === 'expand' || req.mode === 'bridge') return expand(req);
     if (req.mode === 'breakdown') return breakdown(req);
+    if (req.mode === 'detail') return detail(req);
     throw new Error(`Unknown mode ${req.mode}`);
   },
 };

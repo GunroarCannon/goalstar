@@ -34,17 +34,30 @@ To set up sync, create a GitHub **classic token** with only the `gist` scope (gi
 ## The model
 
 - **States** (cards) are situations that become true, like "Visa approved". The start card is *you are here*.
-- **Actions** (arrows) are what you do to move between states. Each one is rated 0–10 for time, money, effort and risk.
+- **Actions** (arrows) are what you do to move between states. Each one is rated 0–10 for time, money, effort and risk, and can carry a **checklist** of sub-steps and a **duration**. Without a duration, goalstar estimates one from the time rating (3 ≈ a week, 5 ≈ a month, 7 ≈ six months, 10 ≈ years).
 - **Edge cost** is the weighted average of those ratings, using the sliders under *What matters to you*.
 - **h** on a card is the dreamer's estimate of the cost still left to reach the goal. It's A*'s heuristic.
 - **g** is the cost so far from whatever you've already achieved. Ticking a card ✓ makes it a new starting point, so the path and *Do next* move forward with you.
 
+### Options for more detail
+
+- **Detail** (per goal, or a default in Settings): Brief (~5 states), Normal (~8), Detailed (~12, specific notes and longer checklists) or Deep (~16 smaller states, exhaustive checklists, tips and pitfalls).
+- **Routes**: one best route, a few alternatives, or many.
+- **Context the dreamer sees** (side panel): constraints, timeframe and budget, sent with every request.
+- **What matters to you**: weight sliders, plus presets (Balanced, Fastest, Cheapest, Easiest, Safest).
+- **Display** (Settings): lined, graph, dot-grid or night paper; notes on cards; h/g numbers; minimap; animations.
+
+The side panel shows how far along you are, a **path profile** chart (each step's cost split into time/money/effort/risk) and a **timeline** of how long each step takes.
+
 ### Buttons
 
 - **✦ Dream map:** generates a whole map from start to goal, with alternative routes, in one call.
-- **★ Search:** *lazy A\**, where the dreamer is the successor function. It runs A* over the current map. If no path reaches the goal, it asks the dreamer to expand the most promising unexpanded state (lowest g + h, leaves first) and repeats until a path exists or the budget runs out. Each expansion is animated.
+- **★ Search:** *lazy A\**, where the dreamer is the successor function. It runs A* over the current map. If no path reaches the goal, it asks the dreamer to expand the most promising unexpanded state (lowest g + h, leaves first) and repeats until a path exists or the budget runs out. When that state is already close to the goal (or half the budget is used), it asks the dreamer to *bridge* the rest of the way to the goal instead of branching further. Each step is animated.
+- **✦ Detail every step** (side panel): asks the dreamer for a checklist, duration and specifics for every step on the best path.
+- **✦ Add detail** (select an arrow) does the same for one action; you can also tick, edit and add checklist items yourself.
 - **✦ Dream next states** (select a card) expands just that state.
 - **✦ Break into smaller steps** (select an arrow) replaces one action with a chain of smaller ones.
+- The minimap and the zoom bar (−, %, +, Fit, Tidy) sit in the bottom-right corner. Keys: `F` fit, `+`/`-` zoom, `Esc` deselect.
 - Double-click the paper to add a state. Select a card and use **Link →** to draw an action by hand. Delete/Backspace removes the selection.
 
 ## Dreamers
@@ -66,24 +79,30 @@ If a dreamer fails (no network, bad key…), goalstar falls back to the offline 
 ```jsonc
 // request (parameters in)
 {
-  "mode": "dream" | "expand" | "breakdown",
+  "mode": "dream" | "expand" | "bridge" | "breakdown" | "detail",
   "goal":  { "label": "Live in Canada", "note": "" },
   "start": { "label": "Now: dev in Lagos", "note": "3 yrs exp, some savings" },
-  "constraints": "Budget $5k",
-  "focus": { "node": { "id": "n_ab12", "label": "...", "h": 12 } }   // expand
-        // { "edge": { "label": "...", "from": "...", "to": "...", "cost": {...} } } // breakdown
+  "constraints": "Speaks basic French",
+  "timeframe": "18 months",
+  "budget": "$5,000",
+  "focus": { "node": { "id": "n_ab12", "label": "...", "h": 12 } }   // expand, bridge
+        // { "edge": { "label": "...", "from": "...", "to": "...", "cost": {...}, "steps": [] } } // breakdown, detail
         // null                                                            // dream
   "existing": [{ "id": "n_ab12", "label": "...", "kind": "state", "done": false }],
-  "params": { "maxStates": 8, "weights": { "time": 1, "money": 1, "effort": 1, "risk": 1 } }
+  "params": { "maxStates": 8, "detail": "normal", "routes": "some",
+              "weights": { "time": 1, "money": 1, "effort": 1, "risk": 1 } }
 }
 
 // result (parameters out)
 {
   "states":  [{ "key": "s1", "label": "Job offer in hand", "note": "", "h": 14 }],
   "actions": [{ "from": "START", "to": "s1", "label": "Apply to 30 sponsoring employers",
-                "note": "", "time": 6, "money": 1, "effort": 7, "risk": 6 }]
+                "note": "", "time": 6, "money": 1, "effort": 7, "risk": 6,
+                "duration": "3–6 months", "steps": ["Polish CV for the target market", "Apply to 10 jobs a week"] }]
 }
 ```
+
+Modes: `dream` maps the whole route; `expand` proposes next states from HERE; `bridge` finishes the route from HERE to GOAL; `breakdown` replaces one action with a chain FROM → … → TO; `detail` returns one FROM → TO action with a richer note, duration and checklist (no states). `duration` and `steps` may be empty.
 
 In `from`/`to` you can use `START`, `GOAL`, `HERE` (expand), `FROM`/`TO` (breakdown), an existing node id, or a key from `states`. Here's a minimal Python plugin:
 
@@ -98,8 +117,10 @@ def dream():
     req = request.json["request"]
     return jsonify(states=[{"key": "s1", "label": "First step done", "note": "", "h": 5}],
                    actions=[{"from": "HERE" if req["mode"] == "expand" else "START", "to": "s1",
-                             "label": "Take the first step", "note": "", "time": 2, "money": 0, "effort": 3, "risk": 1},
-                            {"from": "s1", "to": "GOAL", "label": "Finish", "note": "", "time": 5, "money": 2, "effort": 5, "risk": 3}])
+                             "label": "Take the first step", "note": "", "time": 2, "money": 0, "effort": 3, "risk": 1,
+                             "duration": "", "steps": []},
+                            {"from": "s1", "to": "GOAL", "label": "Finish", "note": "", "time": 5, "money": 2, "effort": 5, "risk": 3,
+                             "duration": "", "steps": []}])
 
 app.run(port=8787)
 ```
@@ -110,12 +131,12 @@ app.run(port=8787)
 
 ```
 index.html            UI shell
-css/style.css         lined-paper look
+css/style.css         paper themes, cards, animations
 js/app.js             wiring: boards, inspector, dreaming, lazy A* search, sync
 js/model.js           data model, localStorage, merging dreamer output
 js/astar.js           A*, edge cost, next actions, h estimation
 js/layout.js          left-to-right layered layout
-js/render.js          pan/zoom canvas, cards and inked arrows
+js/render.js          animated canvas: cards, inked arrows, minimap, zoom, effects
 js/sync.js            GitHub Gist sync + merge
-js/dreamers/          protocol (schema + prompt), offline, claude, ollama, webhook
+js/dreamers/          protocol (schema + prompt), offline, groq, claude, ollama, webhook
 ```

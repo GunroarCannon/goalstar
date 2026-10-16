@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>goalstar</title>
   <meta name="description" content="A* for goals: dream up the states between you and a goal, then find the best path.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4' fill='none' stroke='%232a2d3e' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='0.1 4.4'/%3E%3Ccircle cx='6.2' cy='33' r='3.6' fill='%232f9e6a' stroke='%232a2d3e' stroke-width='1.8'/%3E%3Cpolygon points='28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0' fill='%23f2b705' stroke='%232a2d3e' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#fbf7ea">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -13,19 +14,16 @@
 </head>
 <body>
   <header class="topbar">
-    <button id="sideToggle" class="icon only-narrow" title="Toggle panel">☰</button>
-    <div class="brand">goal<span class="star">★</span>star</div>
-    <select id="boardPick" title="Your goals"></select>
-    <button id="newGoalBtn">+ New goal</button>
+    <button id="sideToggle" class="icon only-narrow" title="Toggle panel" aria-label="Toggle panel">☰</button>
+    <a class="brand" href="./" title="goalstar"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4"/><circle cx="6.2" cy="33" r="3.6" class="dot0"/><g class="st"><polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0"/></g></svg><span class="word">goal<b>star</b></span></a>
+    <select id="boardPick" title="Your goals" aria-label="Your goals"></select>
+    <button id="newGoalBtn" title="New goal"><span aria-hidden="true">+</span><span class="txt"> New goal</span></button>
     <div class="spacer"></div>
-    <button id="dreamBtn" class="primary" title="Generate a whole map of states and actions from start to goal">✦ Dream map</button>
-    <button id="searchBtn" title="A* search: keep expanding the most promising state until a path reaches the goal">★ Search</button>
-    <button id="stopBtn" hidden>■ Stop</button>
-    <button id="tidyBtn" title="Auto-arrange the map">Tidy</button>
-    <button id="fitBtn" title="Fit map to screen">Fit</button>
-    <span id="status" class="status"></span>
-    <button id="syncBtn" class="icon" title="Sync with GitHub Gist">⟳</button>
-    <button id="settingsBtn" class="icon" title="Settings">⚙</button>
+    <button id="dreamBtn" class="primary" title="Generate a whole map of states and actions from start to goal">✦<span class="txt"> Dream map</span></button>
+    <button id="searchBtn" class="gold" title="A* search: keep expanding the most promising state until a path reaches the goal">★<span class="txt"> Search</span></button>
+    <button id="stopBtn" hidden>■<span class="txt"> Stop</span></button>
+    <button id="syncBtn" class="icon" title="Sync with GitHub Gist" aria-label="Sync">⟳</button>
+    <button id="settingsBtn" class="icon" title="Settings" aria-label="Settings">⚙</button>
   </header>
 
   <main>
@@ -33,10 +31,37 @@
       <section class="goal-head">
         <div class="label">Goal</div>
         <h2 id="goalTitle"></h2>
-        <div id="dreamerBadge" class="badge"></div>
+        <div id="progress" class="progress"></div>
+        <div class="goal-opts">
+          <label>Detail
+            <select id="boardDetail">
+              <option value="brief">Brief</option>
+              <option value="normal">Normal</option>
+              <option value="detailed">Detailed</option>
+              <option value="deep">Deep</option>
+            </select>
+          </label>
+          <label>Routes
+            <select id="boardRoutes">
+              <option value="one">One</option>
+              <option value="some">A few</option>
+              <option value="many">Many</option>
+            </select>
+          </label>
+          <span id="dreamerBadge" class="badge" title="Dreamer (change in Settings)"></span>
+        </div>
+        <details id="ctx" class="ctx">
+          <summary>Context the dreamer sees</summary>
+          <label>Constraints / resources <textarea data-b="constraints" rows="2" placeholder="e.g. speak basic French, have a car"></textarea></label>
+          <div class="grid2">
+            <label>Timeframe <input data-b="timeframe" placeholder="e.g. 18 months"></label>
+            <label>Budget <input data-b="budget" placeholder="e.g. $5,000"></label>
+          </div>
+        </details>
       </section>
+      <section id="profile" class="profile" hidden></section>
       <section>
-        <h3>★ Best path</h3>
+        <h3><span>★ Best path</span><button id="detailPathBtn" class="mini" title="Ask the dreamer for a checklist and specifics for every step on the path" hidden>✦ Detail every step</button></h3>
         <ol id="pathList" class="path"></ol>
         <div id="pathTotal" class="muted small"></div>
       </section>
@@ -46,8 +71,9 @@
       </section>
       <section>
         <h3>What matters to you</h3>
-        <div class="muted small">Weights for the path cost. 0 = ignore.</div>
+        <div id="presets" class="presets"></div>
         <div id="weights" class="weights"></div>
+        <div class="muted small">Weights for the path cost. 0 = ignore.</div>
       </section>
       <section>
         <h3>Dream log</h3>
@@ -59,13 +85,19 @@
     </aside>
 
     <div id="canvas" class="canvas"></div>
+    <div id="status" class="status" hidden></div>
 
     <aside id="inspector" class="inspector" hidden></aside>
 
     <div id="empty" class="empty" hidden>
       <div class="empty-card">
-        <div class="brand big">goal<span class="star">★</span>star</div>
-        <p>A* pathfinding, but for your life goals.<br>Describe where you are and where you want to be; goalstar dreams up the states in between, the actions that connect them, and finds the cheapest path.</p>
+        <div class="brand big"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4"/><circle cx="6.2" cy="33" r="3.6" class="dot0"/><g class="st"><polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0"/></g></svg><span class="word">goal<b>star</b></span></div>
+        <p class="tag">A* pathfinding, but for your life goals.</p>
+        <ol class="how">
+          <li><b>Describe</b> where you are and where you want to be.</li>
+          <li><b>Dream</b>: a model (or the offline planner) invents the states in between and the actions that connect them.</li>
+          <li><b>Search</b>: A* finds the cheapest route by what you care about — time, money, effort, risk.</li>
+        </ol>
         <button id="emptyNewBtn" class="primary">+ Start with a goal</button>
       </div>
     </div>
@@ -74,15 +106,37 @@
   <dialog id="newGoalDlg">
     <form method="dialog" id="newGoalForm">
       <h2>New goal</h2>
+      <div id="examples" class="examples" aria-label="Examples"></div>
       <label>Where do you want to be?
         <input name="goal" required placeholder="e.g. Living and working in Canada" autocomplete="off">
       </label>
       <label>Where are you now?
-        <textarea name="context" rows="3" placeholder="e.g. Software dev in Lagos, 3 years experience, some savings, single"></textarea>
+        <textarea name="context" rows="2" placeholder="e.g. Software dev in Lagos, 3 years experience, some savings, single"></textarea>
       </label>
       <label>Constraints or resources <span class="muted">(optional)</span>
-        <textarea name="constraints" rows="2" placeholder="e.g. Budget $5k, want to move within 18 months, speak basic French"></textarea>
+        <textarea name="constraints" rows="2" placeholder="e.g. speak basic French, can't quit my job yet"></textarea>
       </label>
+      <div class="grid2">
+        <label>Timeframe <span class="muted">(optional)</span><input name="timeframe" placeholder="e.g. within 18 months"></label>
+        <label>Budget <span class="muted">(optional)</span><input name="budget" placeholder="e.g. $5,000"></label>
+      </div>
+      <div class="optrow">
+        <span class="optlabel">Detail</span>
+        <div class="seg small-seg">
+          <label title="A handful of states, short notes"><input type="radio" name="detail" value="brief"> Brief</label>
+          <label title="About 8 states with checklists"><input type="radio" name="detail" value="normal"> Normal</label>
+          <label title="About 12 states, specific notes and longer checklists"><input type="radio" name="detail" value="detailed"> Detailed</label>
+          <label title="About 16 smaller states, exhaustive checklists, tips and pitfalls"><input type="radio" name="detail" value="deep"> Deep</label>
+        </div>
+      </div>
+      <div class="optrow">
+        <span class="optlabel">Routes</span>
+        <div class="seg small-seg">
+          <label><input type="radio" name="routes" value="one"> One best</label>
+          <label><input type="radio" name="routes" value="some"> A few</label>
+          <label><input type="radio" name="routes" value="many"> Many</label>
+        </div>
+      </div>
       <label class="row"><input type="checkbox" name="dream" checked> Dream up a map right away</label>
       <div class="actions">
         <button value="cancel" formnovalidate>Cancel</button>
@@ -153,9 +207,47 @@
         </div>
 
         <label class="row"><input type="checkbox" name="fallbackOffline"> If the dreamer fails (offline, no key…), use the offline one</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Planning defaults for new goals</legend>
+        <div class="grid3">
+          <label>Detail
+            <select name="detail">
+              <option value="brief">Brief (~5 states)</option>
+              <option value="normal">Normal (~8)</option>
+              <option value="detailed">Detailed (~12)</option>
+              <option value="deep">Deep (~16)</option>
+            </select>
+          </label>
+          <label>Routes
+            <select name="routes">
+              <option value="one">One best route</option>
+              <option value="some">A few</option>
+              <option value="many">Many</option>
+            </select>
+          </label>
+          <label>★ Search budget <input type="number" name="searchBudget" min="1" max="30" title="Max expansions per search"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Display</legend>
         <div class="grid2">
-          <label>States per dream <input type="number" name="maxStates" min="3" max="25"></label>
-          <label>★ Search budget (expansions) <input type="number" name="searchBudget" min="1" max="30"></label>
+          <label>Paper
+            <select name="display.paper">
+              <option value="lined">Lined notebook</option>
+              <option value="grid">Graph paper</option>
+              <option value="dots">Dot grid</option>
+              <option value="night">Night (dark)</option>
+            </select>
+          </label>
+          <div class="checks">
+            <label class="row"><input type="checkbox" name="display.notes"> Notes on cards</label>
+            <label class="row"><input type="checkbox" name="display.numbers"> h / g numbers</label>
+            <label class="row"><input type="checkbox" name="display.minimap"> Minimap</label>
+            <label class="row"><input type="checkbox" name="display.motion"> Animations</label>
+          </div>
         </div>
       </fieldset>
 
@@ -167,7 +259,10 @@
         <label>Gist id <span class="muted">(blank = create one on first sync; paste the same id on other devices)</span>
           <input name="gist.id" autocomplete="off">
         </label>
-        <label class="row"><input type="checkbox" name="gist.auto"> Sync automatically after changes</label>
+        <div class="row gap sync-row">
+          <label class="row"><input type="checkbox" name="gist.auto"> Sync automatically after changes</label>
+          <button type="button" id="syncNowBtn" title="Save settings first if you just pasted a token">⟳ Sync now</button>
+        </div>
       </fieldset>
 
       <fieldset>

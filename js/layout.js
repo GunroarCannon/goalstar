@@ -1,6 +1,8 @@
 // Left-to-right layered layout: start on the left, goal on the right.
 
-export const COL = 300, ROW = 150;
+// Cards are 230px wide; the 190px gutter between columns holds the action labels.
+export const CARD_W = 230;
+export const COL = 420, ROW = 175;
 const X0 = 80, Y0 = 80;
 
 export function tidy(board) {
@@ -61,10 +63,10 @@ export function tidy(board) {
 function collide(board, n) {
   for (let tries = 0; tries < 60; tries++) {
     const hit = Object.values(board.nodes).some(
-      (o) => o !== n && o.x != null && Math.abs(o.x - n.x) < 230 && Math.abs(o.y - n.y) < 115,
+      (o) => o !== n && o.x != null && Math.abs(o.x - n.x) < CARD_W + 40 && Math.abs(o.y - n.y) < ROW - 25,
     );
     if (!hit) return;
-    n.y += 60;
+    n.y += ROW / 2;
   }
 }
 

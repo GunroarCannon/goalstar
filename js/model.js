@@ -9,8 +9,10 @@ const KEY = 'goalstar.v1';
 export const DEFAULT_SETTINGS = {
   dreamer: 'offline',          // offline | groq | claude | ollama | webhook
   fallbackOffline: true,       // use the built-in dreamer when the chosen one fails
-  maxStates: 8,                // roughly how many states a full "dream" should create
+  detail: 'normal',            // default for new goals: brief | normal | detailed | deep
+  routes: 'some',              // default for new goals: one | some | many
   searchBudget: 12,            // max expansions per ★ Search run
+  display: { paper: 'lined', notes: true, numbers: true, minimap: true, motion: true },
   weights: { time: 1, money: 1, effort: 1, risk: 1 },
   groq: { apiKey: '', model: 'openai/gpt-oss-20b' },
   claude: { apiKey: '', model: 'claude-opus-5-5', effort: 'medium', refusalFallback: true },
@@ -43,7 +45,10 @@ export function saveData(data) {
 
 const short = (s, n) => (s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s);
 
-export function createBoard({ goal, context = '', constraints = '' }) {
+// How many states a full dream asks for at each detail level.
+export const DETAIL_STATES = { brief: 5, normal: 8, detailed: 12, deep: 16 };
+
+export function createBoard({ goal, context = '', constraints = '', timeframe = '', budget = '', detail = 'normal', routes = 'some' }) {
   const firstLine = context.split(/[.\n]/)[0].trim();
   const start = {
     id: uid(), kind: 'start', label: firstLine ? short('Now: ' + firstLine, 70) : 'Where I am now',
@@ -53,7 +58,7 @@ export function createBoard({ goal, context = '', constraints = '' }) {
     id: uid(), kind: 'goal', label: goal, note: '', h: 0, x: 900, y: 240, done: false,
   };
   return {
-    id: uid('b'), title: goal, constraints,
+    id: uid('b'), title: goal, constraints, timeframe, budget, detail, routes,
     startId: start.id, goalId: goalNode.id,
     nodes: { [start.id]: start, [goalNode.id]: goalNode },
     edges: {},
@@ -64,8 +69,28 @@ export function createBoard({ goal, context = '', constraints = '' }) {
 export const normLabel = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 // Merge a dreamer result ({states, actions}) into a board.
-// ctx: { by, hereId, fromId, toId, replaceEdgeId }
+const toSteps = (list, old = []) => {
+  const was = new Map(old.map((s) => [normLabel(s.text), s.done]));
+  return (list || []).map((text) => ({ text, done: !!was.get(normLabel(text)) }));
+};
+
+// Merge a dreamer result ({states, actions}) into a board.
+// ctx: { by, hereId, fromId, toId, replaceEdgeId, updateEdgeId }
 export function applyDream(board, result, ctx = {}) {
+  if (ctx.updateEdgeId) {
+    // "detail" mode: enrich one existing action in place.
+    const e = board.edges[ctx.updateEdgeId];
+    const a = result.actions.find((x) => x.from === 'FROM' && x.to === 'TO') || result.actions[0];
+    if (!e || !a) return { nodes: [], edges: [] };
+    if (a.label) e.label = a.label;
+    if (a.note) e.note = a.note;
+    if (a.duration) e.duration = a.duration;
+    if (a.steps.length) e.steps = toSteps(a.steps, e.steps);
+    e.cost = { time: a.time, money: a.money, effort: a.effort, risk: a.risk };
+    e.by = ctx.by;
+    board.updated = now();
+    return { nodes: [], edges: [e.id], updated: true };
+  }
   const keymap = {};
   const created = [];
   const byLabel = new Map(Object.values(board.nodes).map((n) => [normLabel(n.label), n.id]));
@@ -90,6 +115,7 @@ export function applyDream(board, result, ctx = {}) {
     const e = {
       id: uid('e'), from, to, label: a.label, note: a.note,
       cost: { time: a.time, money: a.money, effort: a.effort, risk: a.risk }, by: ctx.by,
+      duration: a.duration || '', steps: toSteps(a.steps),
     };
     board.edges[e.id] = e;
     newEdges.push(e.id);

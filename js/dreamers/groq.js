@@ -4,7 +4,7 @@ import { RESULT_SCHEMA, SYSTEM_PROMPT, buildUserPrompt } from './protocol.js';
 
 const SHAPE = `Reply with ONLY a JSON object of this exact shape (no prose, no markdown):
 {"states":[{"key":"s1","label":"...","note":"...","h":12}],
- "actions":[{"from":"START","to":"s1","label":"...","note":"...","time":3,"money":1,"effort":4,"risk":2}]}
+ "actions":[{"from":"START","to":"s1","label":"...","note":"...","time":3,"money":1,"effort":4,"risk":2,"duration":"2–3 weeks","steps":["...","..."]}]}
 JSON Schema: ${JSON.stringify(RESULT_SCHEMA)}`;
 
 export default {
