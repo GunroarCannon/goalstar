@@ -317,7 +317,19 @@ async function dreamMap() {
   if (!b || busy) return;
   if (Object.keys(b.edges).length && !confirm('Dream a fresh map onto this board? Existing states are kept; matching ones are merged.')) return;
   const added = await dream(request('dream'), {}, 'dreaming a map…');
-  if (added) { tidy(b); persist(); refresh(); canvas.fit(); }
+  if (added) await afterDream(b);
+}
+
+// Lay out a fresh map; if the dreamer left a gap before the goal, let ★ Search fill it.
+async function afterDream(b) {
+  tidy(b);
+  persist();
+  refresh();
+  canvas.fit();
+  if (!astar(b, settings().weights).found) {
+    log('map doesn’t reach the goal yet — running ★ Search');
+    await search();
+  }
 }
 
 async function expandNode(id) {
@@ -395,7 +407,7 @@ $('#newGoalDlg').addEventListener('close', async () => {
   canvas.fit();
   if (f.get('dream')) {
     const added = await dream(request('dream'), {}, 'dreaming a map…');
-    if (added) { tidy(b); persist(); refresh(); canvas.fit(); }
+    if (added) await afterDream(b);
   }
 });
 
