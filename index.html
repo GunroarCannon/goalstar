@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>goalstar</title>
+  <meta name="description" content="A* for goals: dream up the states between you and a goal, then find the best path.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="sideToggle" class="icon only-narrow" title="Toggle panel">☰</button>
+    <div class="brand">goal<span class="star">★</span>star</div>
+    <select id="boardPick" title="Your goals"></select>
+    <button id="newGoalBtn">+ New goal</button>
+    <div class="spacer"></div>
+    <button id="dreamBtn" class="primary" title="Generate a whole map of states and actions from start to goal">✦ Dream map</button>
+    <button id="searchBtn" title="A* search: keep expanding the most promising state until a path reaches the goal">★ Search</button>
+    <button id="stopBtn" hidden>■ Stop</button>
+    <button id="tidyBtn" title="Auto-arrange the map">Tidy</button>
+    <button id="fitBtn" title="Fit map to screen">Fit</button>
+    <span id="status" class="status"></span>
+    <button id="syncBtn" class="icon" title="Sync with GitHub Gist">⟳</button>
+    <button id="settingsBtn" class="icon" title="Settings">⚙</button>
+  </header>
+
+  <main>
+    <aside id="side" class="side">
+      <section class="goal-head">
+        <div class="label">Goal</div>
+        <h2 id="goalTitle"></h2>
+        <div id="dreamerBadge" class="badge"></div>
+      </section>
+      <section>
+        <h3>★ Best path</h3>
+        <ol id="pathList" class="path"></ol>
+        <div id="pathTotal" class="muted small"></div>
+      </section>
+      <section>
+        <h3>Do next</h3>
+        <ul id="nextList" class="next"></ul>
+      </section>
+      <section>
+        <h3>What matters to you</h3>
+        <div class="muted small">Weights for the path cost. 0 = ignore.</div>
+        <div id="weights" class="weights"></div>
+      </section>
+      <section>
+        <h3>Dream log</h3>
+        <ul id="log" class="log"></ul>
+      </section>
+      <section class="danger-zone">
+        <button id="deleteBoardBtn" class="link danger">Delete this goal</button>
+      </section>
+    </aside>
+
+    <div id="canvas" class="canvas"></div>
+
+    <aside id="inspector" class="inspector" hidden></aside>
+
+    <div id="empty" class="empty" hidden>
+      <div class="empty-card">
+        <div class="brand big">goal<span class="star">★</span>star</div>
+        <p>A* pathfinding, but for your life goals.<br>Describe where you are and where you want to be; goalstar dreams up the states in between, the actions that connect them, and finds the cheapest path.</p>
+        <button id="emptyNewBtn" class="primary">+ Start with a goal</button>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="newGoalDlg">
+    <form method="dialog" id="newGoalForm">
+      <h2>New goal</h2>
+      <label>Where do you want to be?
+        <input name="goal" required placeholder="e.g. Living and working in Canada" autocomplete="off">
+      </label>
+      <label>Where are you now?
+        <textarea name="context" rows="3" placeholder="e.g. Software dev in Lagos, 3 years experience, some savings, single"></textarea>
+      </label>
+      <label>Constraints or resources <span class="muted">(optional)</span>
+        <textarea name="constraints" rows="2" placeholder="e.g. Budget $5k, want to move within 18 months, speak basic French"></textarea>
+      </label>
+      <label class="row"><input type="checkbox" name="dream" checked> Dream up a map right away</label>
+      <div class="actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDlg">
+    <form method="dialog" id="settingsForm">
+      <h2>Settings</h2>
+
+      <fieldset>
+        <legend>Dreamer — what invents states &amp; actions</legend>
+        <div class="seg" id="dreamerSeg">
+          <label><input type="radio" name="dreamer" value="offline"> Offline</label>
+          <label><input type="radio" name="dreamer" value="groq"> Groq</label>
+          <label><input type="radio" name="dreamer" value="claude"> Claude</label>
+          <label><input type="radio" name="dreamer" value="ollama"> Ollama (local)</label>
+          <label><input type="radio" name="dreamer" value="webhook"> Webhook</label>
+        </div>
+
+        <div class="pane" data-pane="offline">
+          <p class="muted small">Built-in templates for moving abroad, launching an app, money, fitness, careers and learning, plus a generic planner. No network needed.</p>
+        </div>
+        <div class="pane" data-pane="groq">
+          <label>API key <input type="password" name="groq.apiKey" placeholder="gsk_…" autocomplete="off"></label>
+          <label>Model <input name="groq.model" list="groqModels" placeholder="openai/gpt-oss-20b"></label>
+          <datalist id="groqModels">
+            <option value="openai/gpt-oss-20b">
+            <option value="openai/gpt-oss-120b">
+            <option value="qwen/qwen3.8-27b">
+          </datalist>
+          <p class="muted small">Fast and has a free tier. Your key is stored only in this browser. Get one at console.groq.com.</p>
+        </div>
+        <div class="pane" data-pane="claude">
+          <label>API key <input type="password" name="claude.apiKey" placeholder="sk-ant-…" autocomplete="off"></label>
+          <div class="grid2">
+            <label>Model
+              <select name="claude.model">
+                <option value="claude-opus-5-5">Claude Opus 5.5 (best)</option>
+                <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (cheaper)</option>
+                <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheapest)</option>
+              </select>
+            </label>
+            <label>Effort
+              <select name="claude.effort">
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+              </select>
+            </label>
+          </div>
+          <label class="row"><input type="checkbox" name="claude.refusalFallback"> Retry on a fallback model if a request is declined</label>
+          <p class="muted small">Your key is stored only in this browser. Get one at console.anthropic.com.</p>
+        </div>
+        <div class="pane" data-pane="ollama">
+          <div class="grid2">
+            <label>Endpoint <input name="ollama.endpoint" placeholder="http://localhost:11434"></label>
+            <label>Model <input name="ollama.model" placeholder="llama3.1"></label>
+          </div>
+          <p class="muted small">Runs fully offline. If this page isn't served from localhost, start Ollama with <code>OLLAMA_ORIGINS</code> set to this site's origin.</p>
+        </div>
+        <div class="pane" data-pane="webhook">
+          <label>URL <input name="webhook.url" placeholder="http://localhost:8787/dream"></label>
+          <label>Extra headers (JSON) <input name="webhook.headers" placeholder='{"Authorization":"Bearer …"}'></label>
+          <p class="muted small">Receives <code>{request, schema}</code> as JSON and must return <code>{states, actions}</code>. See README → "Write your own dreamer".</p>
+        </div>
+
+        <label class="row"><input type="checkbox" name="fallbackOffline"> If the dreamer fails (offline, no key…), use the offline one</label>
+        <div class="grid2">
+          <label>States per dream <input type="number" name="maxStates" min="3" max="25"></label>
+          <label>★ Search budget (expansions) <input type="number" name="searchBudget" min="1" max="30"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cloud sync — secret GitHub Gist (free)</legend>
+        <label>GitHub token <span class="muted">(classic token, "gist" scope only)</span>
+          <input type="password" name="gist.token" placeholder="ghp_…" autocomplete="off">
+        </label>
+        <label>Gist id <span class="muted">(blank = create one on first sync; paste the same id on other devices)</span>
+          <input name="gist.id" autocomplete="off">
+        </label>
+        <label class="row"><input type="checkbox" name="gist.auto"> Sync automatically after changes</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Data</legend>
+        <div class="row gap">
+          <button type="button" id="exportBtn">Export JSON</button>
+          <button type="button" id="importBtn">Import JSON</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
