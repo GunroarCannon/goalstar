@@ -213,6 +213,42 @@ export class AuthManager {
     }
   }
 
+  getAvatar(user) {
+    try {
+      const saved = localStorage.getItem('goalstar_avatar');
+      if (saved !== null && !isNaN(parseInt(saved, 10))) {
+        const n = parseInt(saved, 10);
+        if (n >= 1 && n <= 24) return n;
+      }
+    } catch (e) {}
+
+    let idx = 1;
+    if (user && (user.name || user.address)) {
+      const seed = user.name || user.address;
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+        hash |= 0;
+      }
+      idx = (Math.abs(hash) % 24) + 1;
+    } else {
+      idx = Math.floor(Math.random() * 24) + 1;
+    }
+
+    try {
+      localStorage.setItem('goalstar_avatar', idx);
+    } catch (e) {}
+    return idx;
+  }
+
+  setAvatar(idx) {
+    const val = Math.max(1, Math.min(24, parseInt(idx, 10) || 1));
+    try {
+      localStorage.setItem('goalstar_avatar', val);
+    } catch (e) {}
+    this.updateUI();
+  }
+
   logout() {
     sound.play('click');
     this.saveUser(null);
@@ -229,22 +265,71 @@ export class AuthManager {
     const userBadges = document.querySelectorAll('.user-badge, #userBadge');
     const userNames = document.querySelectorAll('.user-name, #userName');
 
+    const avatarIdx = this.getAvatar(this.user);
+    const avatarImgHtml = `<img src="assets/humaaans/webp/hu_stand_${avatarIdx}.webp" class="humaaan-avatar-img" alt="Avatar ${avatarIdx}" loading="lazy" />`;
+
+    // Render clipped face into all avatar circles
+    document.querySelectorAll('.avatar-circle, #userAvatarCircle, #homeUserAvatarCircle').forEach(c => {
+      c.innerHTML = avatarImgHtml;
+      c.dataset.avatar = avatarIdx;
+    });
+
+    let displayName = 'Guest';
+    let typeLabel = 'Session Profile';
+
     if (this.user) {
       loginBtns.forEach(btn => { btn.hidden = true; btn.style.display = 'none'; });
       userBadges.forEach(b => { b.hidden = false; b.style.display = 'inline-flex'; b.title = this.user.name; });
-      let displayName = this.user.name || 'User';
+      displayName = this.user.name || 'User';
       if (this.user.type === 'demo_guest') {
         displayName = this.user.name.replace('Guest Builder #', 'Guest #');
+        typeLabel = 'Guest Profile';
       } else if (this.user.type === 'sui_wallet') {
         displayName = this.user.address ? (this.user.address.slice(0, 6) + '…' + this.user.address.slice(-3)) : 'Sui';
+        typeLabel = 'Sui Web3';
       } else if (this.user.type === 'email') {
         displayName = (this.user.email || '').split('@')[0];
+        typeLabel = 'Email Cloud';
+      } else if (this.user.type === 'walrus_id') {
+        typeLabel = 'Walrus Memory';
       }
       userNames.forEach(n => { n.textContent = displayName; });
     } else {
       loginBtns.forEach(btn => { btn.hidden = false; btn.style.display = 'inline-flex'; });
       userBadges.forEach(b => { b.hidden = true; b.style.display = 'none'; });
     }
+
+    // Active Profile Card inside login dialog
+    document.querySelectorAll('.active-profile-card, #activeProfileCard').forEach(card => {
+      if (this.user) {
+        card.hidden = false;
+        card.removeAttribute('hidden');
+        card.style.display = 'flex';
+        card.innerHTML = `
+          <div class="active-card-avatar">
+            <img src="assets/humaaans/webp/hu_stand_${avatarIdx}.webp" class="humaaan-avatar-img" alt="Avatar">
+          </div>
+          <div class="active-card-meta">
+            <div class="active-card-header">
+              <span class="active-pill"><span class="active-dot"></span> Active</span>
+              <span class="account-type-tag">${typeLabel}</span>
+            </div>
+            <h4 class="active-user-name">${displayName}</h4>
+            <div class="active-status-line">Walrus Memory Sync Connected</div>
+          </div>
+          <button type="button" class="logout-action-btn" id="activeCardLogoutBtn">Log Out</button>
+        `;
+        card.querySelector('#activeCardLogoutBtn')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.logout();
+        });
+      } else {
+        card.hidden = true;
+        card.setAttribute('hidden', 'true');
+        card.style.display = 'none';
+        card.innerHTML = '';
+      }
+    });
   }
 
   init() {
@@ -316,3 +401,6 @@ export class AuthManager {
 }
 
 export const auth = new AuthManager();
+if (typeof window !== 'undefined') {
+  window.auth = auth;
+}

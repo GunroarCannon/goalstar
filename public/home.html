@@ -742,14 +742,9 @@
       border-color: rgba(245, 158, 11, 0.4);
       box-shadow: 2px 2px 0 rgba(245, 158, 11, 0.3);
     }
-    /* Interactive Tour Button Bounce Animation */
-    @keyframes tourBounce {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-6px); }
-      60% { transform: translateY(-3px); }
-    }
+    /* Tour Button - No Bounce */
     .tour-bounce-btn {
-      animation: tourBounce 2.2s infinite cubic-bezier(0.28, 0.84, 0.42, 1) !important;
+      animation: none !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -2517,15 +2512,25 @@
     }
 
     @media (max-width: 768px) {
+      html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+      }
       .landing-header {
-        padding: 8px 14px;
+        padding: 8px 12px;
         gap: 8px;
+        max-width: 100vw;
+        box-sizing: border-box;
       }
       .landing-nav {
         display: none;
       }
       .landing-actions {
-        gap: 8px;
+        gap: 6px;
+      }
+      .btn-3d-toggle {
+        width: 32px;
+        height: 26px;
       }
       .engraved-switch {
         width: 88px;
@@ -2715,14 +2720,9 @@
       .hero-cta-row .album-btn {
         width: 100%;
       }
-    /* Interactive Tour Button Bounce Animation */
-    @keyframes tourBounce {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-6px); }
-      60% { transform: translateY(-3px); }
-    }
+    /* Tour Button - No Bounce */
     .tour-bounce-btn {
-      animation: tourBounce 2.2s infinite cubic-bezier(0.28, 0.84, 0.42, 1) !important;
+      animation: none !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -2742,14 +2742,9 @@
       .uc-card-footer .album-btn {
         width: 100%;
       }
-    /* Interactive Tour Button Bounce Animation */
-    @keyframes tourBounce {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-6px); }
-      60% { transform: translateY(-3px); }
-    }
+    /* Tour Button - No Bounce */
     .tour-bounce-btn {
-      animation: tourBounce 2.2s infinite cubic-bezier(0.28, 0.84, 0.42, 1) !important;
+      animation: none !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -3278,7 +3273,7 @@
     <nav class="landing-nav">
       <a href="#simulator">Simulator</a>
       <a href="#use-cases">Use Cases</a>
-      <a href="javascript:void(0)" id="navTourBtn" class="tour-bounce-btn">Tour</a>
+      <a href="javascript:void(0)" id="navTourBtn">Info</a>
       <select id="themeSelect" class="theme-select engraved-select" style="margin-left:6px;" title="Choose a theme">
         <option value="simple-dark">Minimal Dark</option>
         <option value="simple-light">Minimal Light</option>
@@ -3292,29 +3287,29 @@
     </nav>
 
     <div class="landing-actions">
-      <!-- Engraved Pill Switch for Theme (LIGHT / DARK) -->
-      <div class="engraved-switch" id="themeSwitch" role="button" tabindex="0" title="Toggle Light / Dark Mode">
-        <div class="switch-track">
-          <div class="switch-knob"></div>
-          <span class="track-label">LIGHT</span>
-        </div>
-      </div>
+      <!-- 3D Toggle: Dark / Light (Vector SVG Icons, No Emojis) -->
+      <button class="btn-3d-toggle" id="themeSwitch" role="switch" title="Toggle Light / Dark Mode" aria-label="Toggle light/dark" tabindex="0">
+        <span class="btn-3d-face">
+          <span class="toggle-icon-light">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </span>
+          <span class="toggle-icon-dark">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </span>
+        </span>
+      </button>
 
-      <!-- Engraved Pill Switch for Sound (AUDIO / MUTE) -->
-      <div class="engraved-switch active" id="soundSwitch" role="button" tabindex="0" title="Toggle Snappy Sound">
-        <div class="switch-track">
-          <div class="switch-knob"></div>
-          <span class="track-label">AUDIO</span>
-        </div>
-      </div>
-
-      <!-- Engraved Pill Switch for Arrow Glow (GLOW ON / NO GLOW) -->
-      <div class="engraved-switch" id="glowSwitch" role="button" tabindex="0" title="Toggle Arrow & Route Glow (also in Planner Settings)">
-        <div class="switch-track">
-          <div class="switch-knob"></div>
-          <span class="track-label">NO GLOW</span>
-        </div>
-      </div>
+      <!-- 3D Toggle: Mute / Unmute (Vector SVG Icons, No Emojis) -->
+      <button class="btn-3d-toggle" id="soundSwitch" role="switch" title="Toggle Sound" aria-label="Toggle sound" tabindex="0">
+        <span class="btn-3d-face">
+          <span class="toggle-icon-sound">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </span>
+          <span class="toggle-icon-mute">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          </span>
+        </span>
+      </button>
 
       <button id="loginBtn" class="album-btn secondary-tape" title="Connect Wallet or Session">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -3323,10 +3318,15 @@
         Log In
       </button>
 
-      <div id="userBadge" class="user-badge" hidden>
-        <span class="indicator live"></span>
-        <span id="userName" class="user-name">Guest</span>
-        <button id="logoutBtn" class="logout-link">logout</button>
+      <div id="userBadge" class="user-badge user-badge-v2" hidden title="Your profile">
+        <div class="avatar-circle" id="homeUserAvatarCircle">
+          <!-- Humaaan face rendered by JS -->
+        </div>
+        <div class="user-info-stack">
+          <span class="live-dot"></span>
+          <span id="userName" class="user-name">Guest</span>
+        </div>
+        <button id="logoutBtn" class="logout-link" title="Logout">↩</button>
       </div>
 
       <button id="launchPlannerTopBtn" class="album-btn primary-tape launch-btn" title="Open Planner">Launch Planner</button>
@@ -3401,9 +3401,6 @@
               <path id="heroInkStrokePath" filter="url(#inkBleedFilter)"
                 d="M 12 18 C 65 24, 145 25, 230 18 C 275 14, 310 11, 328 10"
                 stroke="#b45309" stroke-width="3" stroke-linecap="round" fill="none" />
-              <circle class="ink-droplet" id="inkDrop1" cx="332" cy="12" r="3.2" fill="#d97706" />
-              <circle class="ink-droplet" id="inkDrop2" cx="324" cy="24" r="2.2" fill="#b45309" />
-              <circle class="ink-droplet" id="inkDrop3" cx="16" cy="26" r="2.5" fill="#d97706" />
             </svg>
           </span>
         </h1>
@@ -3430,7 +3427,7 @@
         <div class="hero-cta-row">
           <button id="heroLaunchBtn" class="album-btn primary-tape" title="Open the planner and start mapping a goal" style="font-size: 17px; padding: 11px 26px;">Open Interactive Planner</button>
           <a href="#simulator" class="album-btn secondary-tape" title="Drag the stamina slider to watch A* reroute" style="font-size: 15px;">Try A* In Browser</a>
-          <button id="heroTourBtn" class="album-btn secondary-tape tour-bounce-btn" title="A four-step tour of the idea behind GoalStar" style="font-size: 15px;">Walkthrough Tour</button>
+          <button id="heroTourBtn" class="album-btn secondary-tape" title="About GoalStar" style="font-size: 15px;">Info</button>
         </div>
       </div>
 
@@ -3997,58 +3994,61 @@
 
   <!-- Login Modal Dialog (Clean SVG, No Emojis) -->
   <div class="login-dialog" id="loginDialog" hidden>
-    <div class="login-box">
-      <button type="button" class="close-modal-btn" id="closeLoginDlg" aria-label="Close">&times;</button>
+    <div class="login-box modal-card" style="max-width:480px; width:92vw;">
+      <button type="button" class="close-modal-btn close-login-dlg" id="closeLoginDlg" aria-label="Close">&times;</button>
       <div class="modal-head">
-        <h3>Connect &amp; Sync Portable Memory</h3>
-        <p class="muted small" style="margin: 0; color: var(--ink-muted); font-size: 13px;">Save your personal stamina, friction patterns, and onchain milestone proofs across sessions.</p>
-      </div>
-
-      <!-- Direct Email Input Option -->
-      <div class="login-email-block" style="background:var(--paper-warm); border:1.5px dashed var(--border); border-radius:4px; padding:14px; margin: 14px 0;">
-        <label for="loginEmailInput" style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Store Email to Save Your Plan</label>
-        <div style="display:flex; gap:8px;">
-          <input type="email" id="loginEmailInput" placeholder="e.g. you@example.com" style="flex:1; padding:8px 12px; font-size:13.5px; border:1.5px solid var(--ink); border-radius:4px; background:#fff; font-family:inherit; color:var(--ink);" />
-          <button type="button" id="loginEmailBtn" class="album-btn primary-tape" style="white-space:nowrap; padding:8px 16px; font-size:13px;">Save &amp; Continue</button>
+        <div>
+          <span style="font-family:'Space Grotesk',monospace; font-size:10.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.8px;">Walrus Memory &amp; Identity</span>
+          <h3 style="margin:2px 0 0; font-size:19px;">Connect &amp; Sync Portable Memory</h3>
         </div>
       </div>
+      <p class="muted small" style="margin-bottom: 14px; font-size:12.5px; line-height:1.4; color:var(--ink-soft);">
+        Your stamina profile, completed milestones, and friction rules follow you across sessions and the CLI via Walrus Mainnet.
+      </p>
 
-      <div style="display:flex; align-items:center; margin:12px 0 16px; gap:10px; color:var(--ink-muted); font-size:10.5px; font-family:'Space Grotesk', monospace; font-weight:800;">
-        <span style="flex:1; height:1px; background:var(--border);"></span>
-        <span>OR CONTINUE AS GUEST</span>
-        <span style="flex:1; height:1px; background:var(--border);"></span>
-      </div>
+      <!-- Active Profile Card when logged in -->
+      <div class="active-profile-card" id="activeProfileCard" hidden></div>
 
-      <div class="login-opts">
-        <button type="button" class="login-opt-btn" id="loginGuestBtn">
-          <svg class="opt-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-          <div>
-            <div class="opt-label">Instant Guest Mode</div>
-            <div class="opt-desc">Zero friction. Starts right now in this browser session.</div>
+      <div class="login-options">
+        <div class="login-option" id="loginGuestOpt">
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div class="opt-info">
+            <h4>One-Click Guest Profile</h4>
+            <p>Instant access with local persistence &amp; Walrus cloud bridge.</p>
           </div>
-        </button>
+          <button id="loginGuestBtn" class="mini-btn">Instant Login</button>
+        </div>
 
-        <button type="button" class="login-opt-btn" id="loginSuiBtn">
-          <svg class="opt-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0M2 18c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0"/>
-          </svg>
-          <div>
-            <div class="opt-label">Sui Web3 Wallet</div>
-            <div class="opt-desc">Connect Sui address via Tatum RPC Gateway on Mainnet.</div>
+        <div class="login-option" id="loginWalletOpt">
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0M2 18c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0"/></svg></div>
+          <div class="opt-info">
+            <h4>Connect Sui Web3 Wallet</h4>
+            <p>Suiet, Slush, Ethos or browser Sui extension.</p>
           </div>
-        </button>
+          <button id="loginSuiBtn" class="mini-btn secondary">Connect Wallet</button>
+        </div>
 
-        <button type="button" class="login-opt-btn" id="loginWalrusBtn">
-          <svg class="opt-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="5"/><circle cx="5" cy="8" r="2.5"/><circle cx="19" cy="8" r="2.5"/><circle cx="8" cy="19" r="2"/><circle cx="16" cy="19" r="2"/>
-          </svg>
-          <div>
-            <div class="opt-label">Walrus Memory Direct</div>
-            <div class="opt-desc">Decentralized memory stored on Walrus Mainnet.</div>
+        <div class="login-option" id="loginWalrusOpt">
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/><circle cx="5" cy="8" r="3"/><circle cx="19" cy="8" r="3"/><circle cx="8" cy="19" r="2.5"/><circle cx="16" cy="19" r="2.5"/></svg></div>
+          <div class="opt-info">
+            <h4>Walrus Account ID</h4>
+            <p>Decentralized memory namespace.</p>
+            <input type="text" id="walrusAccountInput" placeholder="e.g. 0x8a94b2... or alice-dev" />
           </div>
-        </button>
+          <button id="loginWalrusBtn" class="mini-btn secondary">Sync Memory</button>
+        </div>
+
+        <div class="login-option email-opt" id="loginEmailOpt">
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div class="opt-info">
+            <h4>Email Account Backup</h4>
+            <p>Save and recover your graph across devices.</p>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <input type="email" id="loginEmailInput" placeholder="e.g. alex@example.com" style="flex:1; padding:6px 10px; font-size:12.5px; border:1px solid var(--border); border-radius:6px; background:var(--panel-2); color:var(--ink);" />
+              <button id="loginEmailBtn" class="mini-btn secondary">Save</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4630,41 +4630,29 @@
       { id: 'fgCloud6', dir: 'rtl', rate: 0.22 },
     ].map(sc => ({ ...sc, el: document.getElementById(sc.id) }));
 
-    // The ink underline under "Portable Memory" draws itself once, from
-    // nothing to full, when the hero is on screen.
+    // The ink underline under "Portable Memory" animates from nothing to fullness on scroll
     function setInkProgress(p) {
       if (!inkSwashSvg) return;
       const strokePath = document.getElementById('heroInkStrokePath');
       if (strokePath) {
-        const len = strokePath.getTotalLength() || 320;
+        const len = strokePath.getTotalLength() || 340;
         strokePath.style.strokeDasharray = `${len}`;
         strokePath.style.strokeDashoffset = `${len * (1 - Math.min(1, Math.max(0, p)))}`;
       }
       const calligPath = document.getElementById('heroInkCalligraphyPath');
-      if (calligPath) calligPath.style.clipPath = `inset(0 ${(1 - Math.min(1, Math.max(0, p))) * 100}% 0 0)`;
-      const drop1 = document.getElementById('inkDrop1');
-      const drop2 = document.getElementById('inkDrop2');
-      const drop3 = document.getElementById('inkDrop3');
-      if (drop1) drop1.style.transform = `scale(${Math.max(0, (p - 0.7) / 0.3)})`;
-      if (drop2) drop2.style.transform = `scale(${Math.max(0, (p - 0.84) / 0.16)})`;
-      if (drop3) drop3.style.transform = `scale(${Math.max(0, (p - 0.55) / 0.45)})`;
+      if (calligPath) {
+        calligPath.style.clipPath = `inset(0 ${(1 - Math.min(1, Math.max(0, p))) * 100}% 0 0)`;
+      }
     }
 
-    function playInkDraw() {
+    function updateInkScroll() {
       if (!inkSwashSvg) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        setInkProgress(1);
-        return;
-      }
-      const t0 = performance.now();
-      const dur = 1500;
-      setInkProgress(0);
-      const step = (t) => {
-        const p = Math.min(1, (t - t0) / dur);
-        setInkProgress(1 - Math.pow(1 - p, 3));
-        if (p < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
+      const rect = inkSwashSvg.getBoundingClientRect();
+      const winH = window.innerHeight || 800;
+      const triggerStart = winH * 0.92;
+      const triggerEnd = winH * 0.35;
+      const p = (triggerStart - rect.top) / (triggerStart - triggerEnd);
+      setInkProgress(Math.min(1, Math.max(0, p)));
     }
 
     let totalPathLength = 0;
@@ -5010,6 +4998,9 @@
         stage.classList.toggle('cards-entered', isCentered);
       }
 
+      // Animate Portable Memory ink streak on scroll from nothing to fullness
+      updateInkScroll();
+
       ticking = false;
     }
 
@@ -5032,7 +5023,7 @@
       buildConnectorPath();
       requestScrollUpdate();
       updateSim();
-      playInkDraw();
+      updateInkScroll();
     }, 100);
 
     // Card heights settle when the webfonts land, so re-measure the route then.
