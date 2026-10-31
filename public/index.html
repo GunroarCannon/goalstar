@@ -34,7 +34,37 @@
   <header class="topbar">
     <button id="sideToggle" class="icon only-narrow" title="Toggle panel" aria-label="Toggle panel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <a class="brand" href="/home" title="Go to Home / Landing Page"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4"/><circle cx="6.2" cy="33" r="3.6" class="dot0"/><g class="st"><polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0"/></g></svg><span class="word">goal<b>star</b></span></a>
-    <select id="boardPick" title="Your goals" aria-label="Your goals"></select>
+    <!-- Rich Custom Goals Dropdown -->
+    <div class="custom-goal-picker" id="customGoalPicker">
+      <button type="button" class="goal-picker-btn" id="goalPickerBtn" aria-haspopup="listbox" aria-expanded="false" title="Switch Goal">
+        <span class="goal-picker-icon" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#f59e0b" stroke="currentColor"/>
+          </svg>
+        </span>
+        <span class="goal-picker-label-wrap">
+          <span class="goal-picker-tag">CURRENT GOAL</span>
+          <span class="goal-picker-name" id="goalPickerCurrentName">Select Goal…</span>
+        </span>
+        <span class="goal-picker-chevron" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </button>
+
+      <div class="goal-picker-menu" id="goalPickerMenu" hidden>
+        <div class="goal-picker-menu-head">
+          <div>
+            <span class="gpm-title">Active Goals</span>
+            <span class="gpm-subtitle" id="goalPickerCount">0 Goals in Memory</span>
+          </div>
+          <button type="button" class="gpm-new-btn" id="goalPickerNewBtn" title="Create a new goal">+ New</button>
+        </div>
+        <div class="goal-picker-list" id="goalPickerList" role="listbox">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+      <select id="boardPick" title="Your goals" aria-label="Your goals" style="display:none;"></select>
+    </div>
     <button id="newGoalBtn" class="engraved-btn" title="New goal"><span aria-hidden="true">+</span><span class="txt"> New goal</span></button>
     <button id="newMilestoneBtn" class="engraved-btn" title="Create a new milestone on the canvas"><span aria-hidden="true">+</span><span class="txt"> Milestone</span></button>
 

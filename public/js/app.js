@@ -298,13 +298,84 @@ function refresh({ inspector = true } = {}) {
 
 
 function renderBoardPick() {
-
   const boards = Object.values(data.boards).sort((a, b) => b.updated - a.updated);
+  const sel = $('#boardPick');
+  if (sel) {
+    sel.innerHTML = boards.map((b) => `<option value="${b.id}" ${b.id === data.currentId ? 'selected' : ''}>${esc(b.nodes[b.goalId]?.label || b.title)}</option>`).join('');
+    sel.hidden = !boards.length;
+  }
+  updateCustomGoalPicker(boards, data.currentId);
+}
 
-  $('#boardPick').innerHTML = boards.map((b) => `<option value="${b.id}" ${b.id === data.currentId ? 'selected' : ''}>${esc(b.nodes[b.goalId]?.label || b.title)}</option>`).join('');
+function updateCustomGoalPicker(boards, currentId) {
+  const picker = $('#customGoalPicker');
+  if (!picker) return;
+  picker.hidden = !boards || !boards.length;
+  if (!boards || !boards.length) return;
 
-  $('#boardPick').hidden = !boards.length;
+  const current = boards.find(b => b.id === currentId) || boards[0];
+  const nameEl = $('#goalPickerCurrentName');
+  if (nameEl) {
+    nameEl.textContent = current ? (current.nodes[current.goalId]?.label || current.title || 'Untitled Goal') : 'Select Goal';
+  }
 
+  const countEl = $('#goalPickerCount');
+  if (countEl) {
+    countEl.textContent = `${boards.length} Goal${boards.length === 1 ? '' : 's'} in Memory`;
+  }
+
+  const listEl = $('#goalPickerList');
+  if (listEl) {
+    listEl.innerHTML = boards.map(b => {
+      const isActive = b.id === currentId;
+      const label = esc(b.nodes[b.goalId]?.label || b.title || 'Untitled Goal');
+      const stateNodes = Object.values(b.nodes || {}).filter(n => n.kind === 'state');
+      const totalStates = stateNodes.length;
+      const doneStates = stateNodes.filter(n => n.done).length;
+      const pct = totalStates ? Math.round((doneStates / totalStates) * 100) : 0;
+      return `
+        <div class="goal-picker-item ${isActive ? 'active' : ''}" data-board-id="${b.id}" role="option" aria-selected="${isActive}">
+          <div class="gpi-main">
+            <div class="gpi-icon ${isActive ? 'active' : ''}">
+              ${isActive ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#f59e0b" stroke="currentColor"/></svg>` : `<span class="gpi-dot"></span>`}
+            </div>
+            <div class="gpi-text">
+              <div class="gpi-title">${label}</div>
+              <div class="gpi-meta">${totalStates ? `${doneStates}/${totalStates} milestones (${pct}%)` : 'Draft · Ready to dream'}</div>
+            </div>
+          </div>
+          ${isActive ? '<span class="gpi-badge">ACTIVE</span>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.goal-picker-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const boardId = item.getAttribute('data-board-id');
+        if (boardId) {
+          closeGoalPickerMenu();
+          switchBoard(boardId);
+          try { if (window.SoundFx) SoundFx.play('click'); } catch (e) {}
+        }
+      });
+    });
+  }
+}
+
+function closeGoalPickerMenu() {
+  const menu = $('#goalPickerMenu');
+  const btn = $('#goalPickerBtn');
+  if (menu) menu.hidden = true;
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleGoalPickerMenu() {
+  const menu = $('#goalPickerMenu');
+  const btn = $('#goalPickerBtn');
+  if (!menu || !btn) return;
+  const isHidden = menu.hidden;
+  menu.hidden = !isHidden;
+  btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
 }
 
 
@@ -1911,6 +1982,36 @@ $('#newGoalBtn').addEventListener('click', openNewGoal);
 $('#emptyNewBtn').addEventListener('click', openNewGoal);
 
 $('#boardPick').addEventListener('change', (e) => switchBoard(e.target.value));
+
+const goalPickerBtn = $('#goalPickerBtn');
+if (goalPickerBtn) {
+  goalPickerBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleGoalPickerMenu();
+  });
+}
+
+const goalPickerNewBtn = $('#goalPickerNewBtn');
+if (goalPickerNewBtn) {
+  goalPickerNewBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeGoalPickerMenu();
+    openNewGoal();
+  });
+}
+
+document.addEventListener('click', (e) => {
+  const picker = $('#customGoalPicker');
+  if (picker && !picker.contains(e.target)) {
+    closeGoalPickerMenu();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeGoalPickerMenu();
+  }
+});
 
 $('#dreamBtn').addEventListener('click', dreamMap);
 
