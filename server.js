@@ -16,9 +16,13 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
-// Landing page route
+// Landing page and root app routes
 app.get(['/home', '/home.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'home.html'));
+});
+
+app.get(['/', '/index.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.use(express.static(__dirname));
