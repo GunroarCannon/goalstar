@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en" data-theme-preset="notebook">
+<head>
+  <base href="/">
+  <script>
+    (function() {
+      try {
+        const saved = localStorage.getItem('goalstar_theme_preset') || (localStorage.getItem('goalstar_theme') === 'dark' ? 'night' : 'notebook');
+        document.documentElement.setAttribute('data-theme-preset', saved);
+        const isDark = ['night', 'blueprint', 'terminal', 'simple-dark'].includes(saved);
+        document.documentElement.setAttribute('data-theme-mode', isDark ? 'dark' : 'light');
+        document.documentElement.classList.toggle('dark-mode', isDark);
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    // Default to /home if not logged in
+    if (!localStorage.getItem('goalstar_user')) {
+      window.location.replace('/home');
+    }
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>goalstar</title>
+  <meta name="description" content="A* for goals: dream up the states between you and a goal, then find the best path.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4' fill='none' stroke='%232a2d3e' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='0.1 4.4'/%3E%3Ccircle cx='6.2' cy='33' r='3.6' fill='%232f9e6a' stroke='%232a2d3e' stroke-width='1.8'/%3E%3Cpolygon points='28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0' fill='%23f2b705' stroke='%232a2d3e' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#fbf7ea">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Space+Grotesk:wght@500;600;700;800&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="sideToggle" class="icon only-narrow" title="Toggle panel" aria-label="Toggle panel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <a class="brand" href="/home" title="Go to Home / Landing Page"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4"/><circle cx="6.2" cy="33" r="3.6" class="dot0"/><g class="st"><polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0"/></g></svg><span class="word">goal<b>star</b></span></a>
+    <select id="boardPick" title="Your goals" aria-label="Your goals"></select>
+    <button id="newGoalBtn" class="engraved-btn" title="New goal"><span aria-hidden="true">+</span><span class="txt"> New goal</span></button>
+    <button id="newMilestoneBtn" class="engraved-btn" title="Create a new milestone on the canvas"><span aria-hidden="true">+</span><span class="txt"> Milestone</span></button>
+
+    <!-- Search bar -->
+    <div class="topbar-search">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="topbarSearch" class="topbar-search-input" placeholder="Find goals, users, or agents…" autocomplete="off" aria-label="Search goals">
+    </div>
+
+    <div class="spacer"></div>
+    <button id="dreamBtn" class="primary engraved-btn" title="Generate states and actions with an AI dreamer">Dream</button>
+    <button id="searchBtn" class="gold engraved-btn" title="A* search for the lowest-cost path from START to GOAL">Search</button>
+    <button id="stopBtn" hidden title="Stop dreaming and keep what has been added so far"><span class="txt">Stop</span></button>
+    <button id="syncBtn" class="icon" title="Sync with GitHub Gist" aria-label="Sync"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></button>
+
+    <!-- Explainer Guide -->
+    <button id="uiGuideBtn" class="guide-btn engraved-btn tour-bounce-btn" title="Open Interactive UI Explainer Guide"><span style="color:var(--accent); font-weight:800;">?</span> Guide</button>
+
+    <!-- Hidden theme select (still wired in theme.js, but hidden from topbar — use Settings dialog) -->
+    <select id="themeSelect" class="theme-select engraved-select" title="Choose a theme" style="display:none;">
+      <option value="simple-dark">Minimal Dark</option>
+      <option value="simple-light">Minimal Light</option>
+      <option value="notebook">Notebook</option>
+      <option value="night">Chalkboard</option>
+      <option value="blueprint">Blueprint</option>
+      <option value="monograph">Monograph</option>
+      <option value="sunset">Sunset</option>
+      <option value="terminal">Terminal</option>
+    </select>
+
+    <!-- 3D Toggle: Dark / Light -->
+    <button class="btn-3d-toggle" id="themeSwitch" role="switch" title="Toggle Light / Dark Mode" aria-label="Toggle light/dark" tabindex="0">
+      <span class="btn-3d-face">
+        <span class="toggle-icon-light">☀️</span>
+        <span class="toggle-icon-dark">🌙</span>
+      </span>
+    </button>
+
+    <!-- 3D Toggle: Mute / Unmute -->
+    <button class="btn-3d-toggle" id="soundSwitch" role="switch" title="Toggle Sound" aria-label="Toggle sound" tabindex="0">
+      <span class="btn-3d-face">
+        <span class="toggle-icon-sound">🔊</span>
+        <span class="toggle-icon-mute">🔇</span>
+      </span>
+    </button>
+
+    <!-- Hidden legacy toggle buttons kept for JS compatibility -->
+    <button id="themeToggleBtn" class="theme-toggle-btn" hidden></button>
+    <button id="soundToggleBtn" class="sound-toggle-btn" hidden></button>
+
+    <button id="loginBtn" class="login-btn engraved-btn" title="Log In or Connect Wallet">Log In</button>
+
+    <!-- Humaaans Avatar Profile Badge (class="user-badge" kept for auth.js compatibility) -->
+    <div id="userBadge" class="user-badge user-badge-v2" hidden title="Your profile">
+      <div class="avatar-circle" id="userAvatarCircle" data-avatar="0">
+        <!-- Avatar SVG rendered by JS -->
+      </div>
+      <div class="user-info-stack">
+        <span class="live-dot"></span>
+        <span id="userName" class="user-name"></span>
+      </div>
+      <button id="logoutBtn" class="logout-link" title="Logout">↩</button>
+    </div>
+
+    <button id="settingsBtn" class="icon" title="Settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </header>
+
+  <main>
+    <aside id="side" class="side">
+      <section class="goal-head">
+        <div class="label">Goal</div>
+        <h2 id="goalTitle"></h2>
+        <div id="progress" class="progress"></div>
+        <div class="goal-opts">
+          <label>Detail
+            <select id="boardDetail" title="How many milestones and depth the dreamer invents">
+              <option value="brief">Brief</option>
+              <option value="normal">Normal</option>
+              <option value="detailed">Detailed (Multi-path)</option>
+              <option value="deep">Deep (Exhaustive)</option>
+            </select>
+          </label>
+          <label>Paths / Routes
+            <select id="boardRoutes" title="How many parallel routes A* gets to choose between">
+              <option value="one">One path</option>
+              <option value="some">A few paths (3)</option>
+              <option value="many">Many paths (5+)</option>
+            </select>
+          </label>
+          <span id="dreamerBadge" class="badge" title="Dreamer (change in Settings)"></span>
+        </div>
+        <details id="ctx" class="ctx">
+          <summary>Context the dreamer sees</summary>
+          <label>Constraints / resources <textarea data-b="constraints" rows="2" placeholder="e.g. speak basic French, have a car"></textarea></label>
+          <div class="grid2">
+            <label>Timeframe <input data-b="timeframe" placeholder="e.g. 18 months"></label>
+            <label>Budget <input data-b="budget" placeholder="e.g. $5,000"></label>
+          </div>
+        </details>
+      </section>
+      <section id="profile" class="profile" hidden></section>
+      <section id="bestPathSection">
+        <h3><span>Best Path</span><button id="detailPathBtn" class="mini" title="Ask the dreamer for a checklist and specifics for every step on the path" hidden>Detail every step</button></h3>
+        <ol id="pathList" class="path"></ol>
+        <div id="pathTotal" class="muted small"></div>
+      </section>
+      <section>
+        <h3>Do next</h3>
+        <ul id="nextList" class="next"></ul>
+      </section>
+      <section>
+        <h3>What matters to you</h3>
+        <div id="presets" class="presets"></div>
+        <div id="weights" class="weights"></div>
+        <div class="muted small">Weights for the path cost. 0 = ignore.</div>
+      </section>
+      <section>
+        <h3>Dream log</h3>
+        <ul id="log" class="log"></ul>
+      </section>
+            <section class="telemetry-box">
+        <h3>Protocol Telemetry</h3>
+        <div class="walrus-actions">
+          <button id="shareBoardBtn" class="mini-btn secondary" title="Save this whole map as a Walrus blob and copy a shareable link">Share board</button>
+          <button id="templatesBtn" class="mini-btn secondary" title="Browse goal maps other people published to Walrus">Shared knowledge</button>
+        </div>
+        <div id="templatesBox" class="templates-box" hidden>
+          <div class="tb-head">
+            <b>Shared goal templates</b>
+            <button id="closeTemplatesBtn" class="icon" aria-label="Close templates" title="Close">&times;</button>
+          </div>
+          <ul id="templateList" class="template-list"></ul>
+          <button id="publishTemplateBtn" class="mini-btn" title="Publish this goal so other people (and their agents) can start from it">Publish this goal</button>
+        </div>
+        <div class="telemetry-pill" title="Portable memory on Walrus Mainnet: recalled every session and by the CLI">
+          <span class="indicator live"></span>
+          <span class="lbl">Walrus Memory:</span>
+          <span id="walrusCountBadge" class="val">Connecting...</span>
+        </div>
+        <div class="telemetry-pill" title="Sui Mainnet Node connected via Tatum RPC Gateway with 3 req/sec rate protection">
+          <span class="indicator live"></span>
+          <span class="lbl">Tatum Sui RPC:</span>
+          <span id="tatumRpcBadge" class="val">Connecting...</span>
+        </div>
+        <div class="telemetry-pill" title="Stalled milestones are automatically decomposed after 48h using Walrus insights">
+          <span class="indicator neutral"></span>
+          <span class="lbl">Escalation Rule:</span>
+          <span class="val">Auto-decompose &gt;48h</span>
+        </div>
+        <div id="walrusRecallLine" class="walrus-recall-line">Reading Walrus memory…</div>
+      </section>
+      <section class="tour-resee-box">
+        <button id="sideTourBtn" class="tour-side-btn">Replay Product Tour</button>
+      </section>
+      <section class="danger-zone">
+        <button id="deleteBoardBtn" class="link danger">Delete this goal</button>
+      </section>
+    </aside>
+
+        <div class="canvas-col">
+      <div id="lastTuesdayBanner" class="tuesday-banner" hidden>
+        <div class="tuesday-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 1 5 5c0 2.2-1.4 4.1-3.4 4.8.4.7.4 1.5.4 2.2H10c0-.7 0-1.5.4-2.2C8.4 11.1 7 9.2 7 7a5 5 0 0 1 5-5z"/><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="21" x2="14" y2="21"/></svg></div>
+        <div class="tuesday-body">
+          <span class="tuesday-tag">Walrus Memory on Mainnet</span>
+          <div id="tuesdayText" class="tuesday-text"></div>
+          <div id="tuesdayRule" class="tuesday-sub"></div>
+        </div>
+      </div>
+      <div id="canvas" class="canvas"></div>
+    </div>
+    <div id="status" class="status" hidden></div>
+
+    <aside id="inspector" class="inspector" hidden></aside>
+
+    <div id="empty" class="empty" hidden>
+      <div class="empty-card">
+        <div class="brand big"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4"/><circle cx="6.2" cy="33" r="3.6" class="dot0"/><g class="st"><polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0"/></g></svg><span class="word">goal<b>star</b></span></div>
+        <p class="tag">A* pathfinding, but for your life goals.</p>
+        <ol class="how">
+          <li><b>Describe</b> where you are and where you want to be.</li>
+          <li><b>Dream</b>: a model (or the offline planner) invents the states in between and the actions that connect them.</li>
+          <li><b>Search</b>: A* finds the cheapest route by what you care about — time, money, effort, risk.</li>
+        </ol>
+        <button id="emptyNewBtn" class="primary" title="Describe a destination and where you are starting from">+ Start with a goal</button>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="newGoalDlg">
+    <form method="dialog" id="newGoalForm">
+      <h2>New goal</h2>
+      <div id="examples" class="examples" aria-label="Examples"></div>
+      <label>Where do you want to be?
+        <input name="goal" required placeholder="e.g. Living and working in Canada" autocomplete="off">
+      </label>
+      <label>Where are you now?
+        <textarea name="context" rows="2" placeholder="e.g. Software dev in Lagos, 3 years experience, some savings, single"></textarea>
+      </label>
+      <label>Constraints or resources <span class="muted">(optional)</span>
+        <textarea name="constraints" rows="2" placeholder="e.g. speak basic French, can't quit my job yet"></textarea>
+      </label>
+      <div class="grid2">
+        <label>Timeframe <span class="muted">(optional)</span><input name="timeframe" placeholder="e.g. within 18 months"></label>
+        <label>Budget <span class="muted">(optional)</span><input name="budget" placeholder="e.g. $5,000"></label>
+      </div>
+      <div class="optrow">
+        <span class="optlabel">Detail</span>
+        <div class="seg small-seg" id="newGoalDetailSeg">
+          <label title="A handful of states, short notes"><input type="radio" name="detail" value="brief"> Brief</label>
+          <label title="About 8 states with checklists"><input type="radio" name="detail" value="normal"> Normal</label>
+          <label title="About 12-14 states with multiple parallel paths & specific checklists"><input type="radio" name="detail" value="detailed"> Detailed</label>
+          <label title="About 16+ states, exhaustive multi-path exploration and checklists"><input type="radio" name="detail" value="deep"> Deep</label>
+        </div>
+      </div>
+      <div class="optrow">
+        <span class="optlabel">Routes</span>
+        <div class="seg small-seg" id="newGoalRoutesSeg">
+          <label title="Single direct route with no alternatives"><input type="radio" name="routes" value="one"> One path</label>
+          <label title="3–4 parallel routes to compare"><input type="radio" name="routes" value="some"> A few paths</label>
+          <label title="4–6 distinct alternative strategic routes"><input type="radio" name="routes" value="many"> Many paths</label>
+        </div>
+      </div>
+      <div id="newGoalRouteHint" class="muted small" style="margin-top:-6px; margin-bottom:8px; font-size:11.5px; color:var(--accent);"></div>
+      <label class="row"><input type="checkbox" name="dream" checked> Dream up a map right away</label>
+      <div class="actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDlg">
+    <form method="dialog" id="settingsForm">
+      <h2>Settings</h2>
+
+      <fieldset>
+        <legend>Dreamer — what invents states &amp; actions</legend>
+        <div class="seg" id="dreamerSeg">
+          <label><input type="radio" name="dreamer" value="offline"> Offline</label>
+          <label><input type="radio" name="dreamer" value="groq"> Groq</label>
+          <label><input type="radio" name="dreamer" value="claude"> Claude</label>
+          <label><input type="radio" name="dreamer" value="ollama"> Ollama (local)</label>
+          <label><input type="radio" name="dreamer" value="webhook"> Webhook</label>
+        </div>
+
+        <div class="pane" data-pane="offline">
+          <p class="muted small">Built-in templates for moving abroad, launching an app, money, fitness, careers and learning, plus a generic planner. No network needed.</p>
+        </div>
+        <div class="pane" data-pane="groq">
+          <div class="configured-token-box" style="padding: 10px 14px; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 6px; margin-bottom: 12px; font-size: 13px; line-height: 1.4;">
+            <div style="font-weight: 700; color: #047857; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+              Token loaded from this project's .env
+            </div>
+            <span class="muted small" style="color: var(--ink-soft);">Loaded from this project's <code>.env</code> on the server (<code>GROQ_API_KEY</code>) — nothing to paste here. The key never reaches the browser; requests go through <code>/api/llm/groq</code>.</span>
+          </div>
+          <label>Model <input name="groq.model" list="groqModels" placeholder="openai/gpt-oss-120b"></label>
+          <datalist id="groqModels">
+            <option value="openai/gpt-oss-120b">
+            <option value="openai/gpt-oss-20b">
+            <option value="qwen/qwen3.8-27b">
+          </datalist>
+          <p class="muted small">High-speed inference on Groq. Add your own key above only if you want to bypass the server.</p>
+        </div>
+        <div class="pane" data-pane="claude">
+          <label>API key <input type="password" name="claude.apiKey" placeholder="sk-ant-…" autocomplete="off"></label>
+          <div class="grid2">
+            <label>Model
+              <select name="claude.model">
+                <option value="claude-opus-5-5">Claude Opus 5.5 (best)</option>
+                <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (cheaper)</option>
+                <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheapest)</option>
+              </select>
+            </label>
+            <label>Effort
+              <select name="claude.effort">
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+              </select>
+            </label>
+          </div>
+          <label class="row"><input type="checkbox" name="claude.refusalFallback"> Retry on a fallback model if a request is declined</label>
+          <p class="muted small">Your key is stored only in this browser. Get one at console.anthropic.com.</p>
+        </div>
+        <div class="pane" data-pane="ollama">
+          <div class="grid2">
+            <label>Endpoint <input name="ollama.endpoint" placeholder="http://localhost:11434"></label>
+            <label>Model <input name="ollama.model" placeholder="llama3.1"></label>
+          </div>
+          <p class="muted small">Runs fully offline. If this page isn't served from localhost, start Ollama with <code>OLLAMA_ORIGINS</code> set to this site's origin.</p>
+        </div>
+        <div class="pane" data-pane="webhook">
+          <label>URL <input name="webhook.url" placeholder="http://localhost:8787/dream"></label>
+          <label>Extra headers (JSON) <input name="webhook.headers" placeholder='{"Authorization":"Bearer …"}'></label>
+          <p class="muted small">Receives <code>{request, schema}</code> as JSON and must return <code>{states, actions}</code>. See README → "Write your own dreamer".</p>
+        </div>
+
+        <label class="row"><input type="checkbox" name="fallbackOffline"> If the dreamer fails (offline, no key…), use the offline one</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Planning defaults for new goals</legend>
+        <div class="grid3">
+          <label>Detail
+            <select name="detail">
+              <option value="brief">Brief (~5 states)</option>
+              <option value="normal">Normal (~8)</option>
+              <option value="detailed">Detailed (~12)</option>
+              <option value="deep">Deep (~16)</option>
+            </select>
+          </label>
+          <label>Routes
+            <select name="routes">
+              <option value="one">One best route</option>
+              <option value="some">A few</option>
+              <option value="many">Many</option>
+            </select>
+          </label>
+          <label>Search budget <input type="number" name="searchBudget" min="1" max="30" title="Max expansions per search"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Display</legend>
+        <div class="grid2">
+          <label>Theme
+            <select id="settingsTheme" title="Palette plus button and card language">
+              <option value="simple-dark">Minimal Dark (3-color)</option>
+              <option value="simple-light">Minimal Light (3-color)</option>
+              <option value="notebook">Notebook (paper)</option>
+              <option value="night">Chalkboard (dark)</option>
+              <option value="blueprint">Blueprint (technical)</option>
+              <option value="monograph">Monograph (vintage)</option>
+              <option value="sunset">Sunset (warm)</option>
+              <option value="terminal">Terminal (phosphor)</option>
+            </select>
+          </label>
+          <div class="map-font-label">Map Font</div>
+          <div class="font-pill-gallery" id="fontPillGallery" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; margin-bottom:12px;">
+            <button type="button" class="font-pill-btn" data-font="hand" style="font-family:'Patrick Hand', cursive; font-size:15px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Handwritten</button>
+            <button type="button" class="font-pill-btn" data-font="sans" style="font-family:'Space Grotesk', sans-serif; font-size:12.5px; font-weight:600; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Clean Sans</button>
+            <button type="button" class="font-pill-btn" data-font="marker" style="font-family:'Caveat', cursive; font-size:15px; font-weight:700; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Marker</button>
+            <button type="button" class="font-pill-btn" data-font="mono" style="font-family:'Courier Prime', monospace; font-size:12px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Monospace</button>
+            <button type="button" class="font-pill-btn" data-font="serif" style="font-family:'Playfair Display', Georgia, serif; font-size:12.5px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Serif</button>
+            <button type="button" class="font-pill-btn" data-font="typewriter" style="font-family:'Special Elite', monospace; font-size:12px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Typewriter</button>
+            <button type="button" class="font-pill-btn" data-font="system" style="font-family:system-ui, sans-serif; font-size:12px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">System</button>
+          </div>
+          <div class="checks">
+            <label class="row"><input type="checkbox" name="display.notes"> Notes on cards</label>
+            <label class="row"><input type="checkbox" name="display.numbers"> h / g numbers</label>
+            <label class="row"><input type="checkbox" name="display.minimap"> Minimap</label>
+            <label class="row"><input type="checkbox" name="display.motion"> Animations</label>
+            <label class="row"><input type="checkbox" name="display.arrowGlow"> Path glow</label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cloud sync — secret GitHub Gist (free)</legend>
+        <label>GitHub token <span class="muted">(classic token, "gist" scope only)</span>
+          <input type="password" name="gist.token" placeholder="ghp_…" autocomplete="off">
+        </label>
+        <label>Gist id <span class="muted">(blank = create one on first sync; paste the same id on other devices)</span>
+          <input name="gist.id" autocomplete="off">
+        </label>
+        <div class="row gap sync-row">
+          <label class="row"><input type="checkbox" name="gist.auto"> Sync automatically after changes</label>
+          <button type="button" id="syncNowBtn" title="Save settings first if you just pasted a token">Sync now</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Data</legend>
+        <div class="row gap">
+          <button type="button" id="exportBtn">Export JSON</button>
+          <button type="button" id="importBtn">Import JSON</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Profile &amp; Avatar</legend>
+        <p class="muted small" style="margin-bottom:10px;">Choose your avatar — shown next to your name in the topbar.</p>
+        <div class="avatar-picker-grid" id="avatarPickerGrid">
+          <!-- Avatar options rendered by JS -->
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/tour.js"></script>
+  <div id="memoryModal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <h3>Log Workflow Update or Blocker</h3>
+      <p class="muted small" style="margin-bottom: 8px;">Recorded to Walrus Memory on Mainnet. GoalStar will adjust your A* path in future sessions based on this update.</p>
+      <textarea id="memoryInput" rows="4" placeholder="e.g. Spent 3 hours debugging Docker configs, got overwhelmed. Need smaller micro-steps."></textarea>
+      <div class="modal-actions">
+        <button id="cancelMemoryBtn" class="mini-btn secondary">Cancel</button>
+        <button id="saveMemoryBtn" class="mini-btn">Save to Walrus Mainnet</button>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="loginDlg" class="crunchy-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Connect &amp; Sync Portable Memory</h3>
+        <button type="button" class="close-login-dlg" id="closeLoginDlg" aria-label="Close">&times;</button>
+      </div>
+      <p class="muted small" style="margin-bottom: 16px;">
+        Your stamina profile, completed milestones, and friction rules follow you across sessions and the CLI via Walrus Mainnet.
+      </p>
+
+      <div class="login-options">
+        <div class="login-option" id="loginEmailOpt" style="background:var(--panel-2); border:1.5px dashed var(--border); border-radius:6px; padding:12px; margin-bottom:12px;">
+          <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:var(--ink);">Store Email Profile</div>
+          <div style="display:flex; gap:8px;">
+            <input type="email" id="loginEmailInput" placeholder="e.g. alex@example.com" style="flex:1; padding:6px 10px; font-size:13px; border:1px solid var(--border); border-radius:4px; background:var(--panel); color:var(--ink);" />
+            <button id="loginEmailBtn" class="mini-btn">Save Email</button>
+          </div>
+        </div>
+
+        <div class="login-option" id="loginGuestOpt">
+          <div class="opt-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div class="opt-info">
+            <h4>One-Click Guest Profile</h4>
+            <p>Instant access with local persistence &amp; Walrus cloud bridge.</p>
+          </div>
+          <button id="connectGuestBtn" class="mini-btn">Instant Login</button>
+        </div>
+
+        <div class="login-option" id="loginWalletOpt">
+          <div class="opt-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0M2 18c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0"/></svg></div>
+          <div class="opt-info">
+            <h4>Connect Sui Web3 Wallet</h4>
+            <p>Suiet, Slush, Ethos or any browser Sui wallet.</p>
+          </div>
+          <button id="connectWalletBtn" class="mini-btn secondary">Connect Wallet</button>
+        </div>
+
+        <div class="login-option" id="loginWalrusOpt">
+          <div class="opt-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/><circle cx="5" cy="8" r="3"/><circle cx="19" cy="8" r="3"/><circle cx="8" cy="19" r="2.5"/><circle cx="16" cy="19" r="2.5"/></svg></div>
+          <div class="opt-info">
+            <h4>Walrus Account ID</h4>
+            <p>Sync with your decentralized memory namespace.</p>
+            <input type="text" id="walrusAccountInput" placeholder="e.g. 0x8a94b2... or alice-dev" />
+          </div>
+          <button id="connectWalrusBtn" class="mini-btn secondary">Sync Memory</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+
+  <!-- Interactive UI Explainer Modal (What Each Element Does) -->
+  <dialog id="uiGuideDlg" style="max-width: 680px; width: 92%; border-radius: 12px; border: 1.5px solid var(--border); background: var(--panel); box-shadow: 0 18px 48px var(--shadow); padding: 0;">
+    <div style="padding: 20px 24px; border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span style="font-family:'Space Grotesk',monospace; font-size:11px; font-weight:800; color:var(--accent); text-transform:uppercase;">Interactive Interface Guide</span>
+        <h3 style="margin: 2px 0 0; font-size: 20px;">What Each GoalStar Element Does</h3>
+      </div>
+      <button type="button" id="closeUiGuideBtn" class="close-modal-btn" style="border:none; background:none; font-size:24px; cursor:pointer;">&times;</button>
+    </div>
+    
+    <div style="padding: 18px 24px; max-height: 70vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; line-height: 1.4;">
+      
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">1. Goal Selector:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">Select active goals, track progress percent, and see days remaining.</span>
+      </div>
+
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">2. 4-Bar Friction Profile:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">Balances cognitive and physical friction across Time, Money, Effort, and Risk.</span>
+      </div>
+
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">3. Best Path Checklist:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">The lowest-resistance sequence of actions to reach your destination.</span>
+      </div>
+
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">4. Dream &amp; Search:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">AI brainstorms intermediate milestones, and A* computes the optimal route.</span>
+      </div>
+
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">5. Interactive Canvas:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">Drag to organize nodes, click to inspect, or pan and zoom the live graph.</span>
+      </div>
+
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">6. State Inspector:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">Review checklists, take notes, and dream outward actions from this milestone.</span>
+      </div>
+
+      <div style="padding: 9px 12px; background: var(--field); border: 1px solid var(--border); border-radius: 8px;">
+        <b style="color:var(--accent);">7. Sui &amp; Walrus Proof:</b>
+        <span style="color:var(--ink-soft); margin-left:6px;">Syncs memory blobs to Walrus and stamps milestone verification on Sui.</span>
+      </div>
+
+    </div>
+    <div style="padding: 14px 24px; border-top: 1.5px solid var(--border); display: flex; justify-content: flex-end; gap: 10px;">
+      <button type="button" id="launchTourFromGuideBtn" class="primary tour-bounce-btn" style="background:var(--accent); border-color:var(--accent); color:#fff;">Start Interactive Spotlight Tour</button>
+      <button type="button" id="closeGuideDlgBtn">Close Guide</button>
+    </div>
+  </dialog>
+  <!-- Avatar + 3D Toggle Init -->
+  <script>
+  (function() {
+    const HUMAAANS = [
+      // Avatar 0: warm skin, dark hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#FDBCB4"/><ellipse cx="30" cy="20" rx="10" ry="11" fill="#2D1B00"/><circle cx="30" cy="24" r="11" fill="#FDBCB4"/><ellipse cx="26" cy="22" rx="2" ry="2.5" fill="#4A3728"/><ellipse cx="34" cy="22" rx="2" ry="2.5" fill="#4A3728"/><path d="M26 28 Q30 32 34 28" stroke="#C2776A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#E76F51"/></svg>`,
+      // Avatar 1: light skin, blonde
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#FFE0BD"/><ellipse cx="30" cy="19" rx="10" ry="9" fill="#F4D06F"/><circle cx="30" cy="24" r="11" fill="#FFE0BD"/><ellipse cx="26" cy="23" rx="2" ry="2.5" fill="#5C4033"/><ellipse cx="34" cy="23" rx="2" ry="2.5" fill="#5C4033"/><path d="M26 29 Q30 33 34 29" stroke="#C2776A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#2196F3"/></svg>`,
+      // Avatar 2: medium-dark skin, afro
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="19" r="13" fill="#3D1A00"/><circle cx="30" cy="24" r="11" fill="#C68642"/><ellipse cx="26" cy="23" rx="2" ry="2.5" fill="#2D1B00"/><ellipse cx="34" cy="23" rx="2" ry="2.5" fill="#2D1B00"/><path d="M26 29 Q30 33 34 29" stroke="#9B5E3A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#9C27B0"/></svg>`,
+      // Avatar 3: olive skin, dark straight hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#D4A574"/><ellipse cx="30" cy="17" rx="11" ry="8" fill="#1A0A00"/><ellipse cx="20" cy="24" rx="3" ry="6" fill="#1A0A00"/><ellipse cx="40" cy="24" rx="3" ry="6" fill="#1A0A00"/><circle cx="30" cy="24" r="11" fill="#D4A574"/><ellipse cx="26.5" cy="23" rx="1.8" ry="2.2" fill="#3E2723"/><ellipse cx="33.5" cy="23" rx="1.8" ry="2.2" fill="#3E2723"/><path d="M27 29 Q30 32.5 33 29" stroke="#A0522D" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#4CAF50"/></svg>`,
+      // Avatar 4: fair skin, red hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#FFD5C8"/><ellipse cx="30" cy="18" rx="11" ry="10" fill="#C0392B"/><ellipse cx="20" cy="26" rx="2.5" ry="5" fill="#C0392B"/><ellipse cx="40" cy="26" rx="2.5" ry="5" fill="#C0392B"/><circle cx="30" cy="24" r="11" fill="#FFD5C8"/><ellipse cx="26" cy="23" rx="1.8" ry="2.2" fill="#795548"/><ellipse cx="34" cy="23" rx="1.8" ry="2.2" fill="#795548"/><path d="M26 29 Q30 33 34 29" stroke="#D4776A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#FF9800"/></svg>`,
+      // Avatar 5: dark skin, short hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#6D4C41"/><ellipse cx="30" cy="18" rx="10" ry="7" fill="#1B0000"/><circle cx="30" cy="24" r="11" fill="#8D5524"/><ellipse cx="26" cy="23" rx="2" ry="2.5" fill="#1B0000"/><ellipse cx="34" cy="23" rx="2" ry="2.5" fill="#1B0000"/><path d="M26 29 Q30 33 34 29" stroke="#6D3B2E" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#607D8B"/></svg>`,
+      // Avatar 6: light skin, bun
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="24" r="11" fill="#FFDCC2"/><circle cx="30" cy="14" r="6" fill="#4A2800"/><ellipse cx="30" cy="18" rx="9" ry="5" fill="#4A2800"/><ellipse cx="26" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><ellipse cx="34" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><path d="M26 29 Q30 33 34 29" stroke="#BF7A6A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#E91E63"/></svg>`,
+      // Avatar 7: medium skin, curly hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="24" r="11" fill="#E8B89A"/><circle cx="22" cy="18" r="6" fill="#2C1810"/><circle cx="30" cy="15" r="7" fill="#2C1810"/><circle cx="38" cy="18" r="6" fill="#2C1810"/><ellipse cx="26" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><ellipse cx="34" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><path d="M26 29 Q30 33 34 29" stroke="#BF7A6A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#00BCD4"/></svg>`,
+    ];
+
+    // ─── Render avatar into a container element ───────────────────────────
+    function renderAvatar(container, index) {
+      if (!container) return;
+      container.innerHTML = HUMAAANS[index] || HUMAAANS[0];
+      container.dataset.avatar = index;
+    }
+
+    // ─── Load saved avatar index (default 0) ─────────────────────────────
+    function getSavedAvatar() {
+      try { return parseInt(localStorage.getItem('goalstar_avatar') || '0', 10); } catch(e) { return 0; }
+    }
+
+    // ─── Render topbar avatar circle ──────────────────────────────────────
+    const topbarCircle = document.getElementById('userAvatarCircle');
+    renderAvatar(topbarCircle, getSavedAvatar());
+
+    // ─── Build avatar picker grid in settings dialog ──────────────────────
+    function buildAvatarPicker() {
+      const grid = document.getElementById('avatarPickerGrid');
+      if (!grid || grid.dataset.built) return;
+      grid.dataset.built = '1';
+      const saved = getSavedAvatar();
+      HUMAAANS.forEach((svg, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'avatar-opt' + (i === saved ? ' selected' : '');
+        btn.title = 'Avatar ' + (i + 1);
+        btn.dataset.avatarIndex = i;
+        btn.innerHTML = svg;
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          try { localStorage.setItem('goalstar_avatar', i); } catch(e) {}
+          renderAvatar(topbarCircle, i);
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    // Build picker when settings dialog opens
+    const settingsDlg = document.getElementById('settingsDlg');
+    if (settingsDlg) {
+      settingsDlg.addEventListener('click', buildAvatarPicker, { once: false });
+      // Also wire to the settings button
+      const settingsBtn = document.getElementById('settingsBtn');
+      if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
+    }
+
+    // ─── 3D Toggle visual state sync ─────────────────────────────────────
+    // theme.js and sound.js already manage the `.active` class via their own
+    // `applyTheme()` / `updateUI()` calls using the same element IDs.
+    // We just need to ensure the initial visual state reflects localStorage.
+    function syncThemeToggle() {
+      const sw = document.getElementById('themeSwitch');
+      if (!sw) return;
+      try {
+        const preset = localStorage.getItem('goalstar_theme_preset') || 'notebook';
+        const darkPresets = ['night', 'blueprint', 'terminal', 'simple-dark'];
+        const isDark = darkPresets.includes(preset);
+        sw.classList.toggle('active', isDark);
+        sw.setAttribute('aria-checked', isDark ? 'true' : 'false');
+      } catch(e) {}
+    }
+
+    function syncSoundToggle() {
+      const sw = document.getElementById('soundSwitch');
+      if (!sw) return;
+      try {
+        const enabled = localStorage.getItem('goalstar_sound_enabled') !== 'false';
+        sw.classList.toggle('active', enabled);
+        sw.setAttribute('aria-checked', enabled ? 'true' : 'false');
+      } catch(e) {}
+    }
+
+    syncThemeToggle();
+    syncSoundToggle();
+
+    // Re-sync theme toggle whenever theme changes (theme.js fires this event)
+    document.addEventListener('goalstar:theme', (e) => {
+      const sw = document.getElementById('themeSwitch');
+      if (sw && e.detail) {
+        sw.classList.toggle('active', !!e.detail.isDark);
+        sw.setAttribute('aria-checked', e.detail.isDark ? 'true' : 'false');
+      }
+    });
+  })();
+  </script>
+
+</body>
+</html>

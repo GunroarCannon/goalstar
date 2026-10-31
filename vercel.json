@@ -1,11 +1,5 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "css/**,js/**,assets/**,index.html,home.html"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",

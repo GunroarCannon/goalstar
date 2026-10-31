@@ -18,13 +18,18 @@ app.use(express.json());
 
 // Landing page and root app routes
 app.get(['/home', '/home.html'], (req, res) => {
+  const p = path.join(__dirname, 'public', 'home.html');
+  if (fs.existsSync(p)) return res.sendFile(p);
   res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 app.get(['/', '/index.html'], (req, res) => {
+  const p = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(p)) return res.sendFile(p);
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
 // ---- Walrus Memory Client ----
