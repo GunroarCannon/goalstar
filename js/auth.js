@@ -43,6 +43,7 @@ export class AuthManager {
 
   openLoginModal() {
     sound.play('pop');
+    this.populateAvatarGrids();
     if (!this.dlg) this.dlg = document.getElementById('loginDlg') || document.getElementById('loginDialog');
     if (this.dlg) {
       if (typeof this.dlg.showModal === 'function') {
@@ -260,13 +261,48 @@ export class AuthManager {
     }
   }
 
+  populateAvatarGrids() {
+    const grids = document.querySelectorAll('#modalAvatarPickerGrid, #avatarPickerGrid');
+    const currentAvatar = this.getAvatar(this.user);
+
+    grids.forEach(grid => {
+      // Re-render if empty or count is not 24
+      if (grid.children.length !== 24) {
+        grid.innerHTML = '';
+        for (let i = 1; i <= 24; i++) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'avatar-opt' + (i === currentAvatar ? ' selected' : '');
+          btn.title = `Avatar ${i}`;
+          btn.dataset.avatarIndex = i;
+          btn.innerHTML = `<img src="assets/humaaans/webp/hu_avatar_${i}.webp" class="humaaan-avatar-img" alt="Avatar ${i}" loading="lazy">`;
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.setAvatar(i);
+            sound.play('click');
+            if (typeof window.toast === 'function') {
+              window.toast(`Profile avatar updated to face #${i}!`, 'ok');
+            }
+          });
+          grid.appendChild(btn);
+        }
+      } else {
+        // Just update selected class
+        grid.querySelectorAll('.avatar-opt').forEach(btn => {
+          const idx = parseInt(btn.dataset.avatarIndex, 10);
+          btn.classList.toggle('selected', idx === currentAvatar);
+        });
+      }
+    });
+  }
+
   updateUI() {
     const loginBtns = document.querySelectorAll('.login-btn, #loginBtn');
     const userBadges = document.querySelectorAll('.user-badge, #userBadge');
     const userNames = document.querySelectorAll('.user-name, #userName');
 
     const avatarIdx = this.getAvatar(this.user);
-    const avatarImgHtml = `<img src="assets/humaaans/webp/hu_stand_${avatarIdx}.webp" class="humaaan-avatar-img" alt="Avatar ${avatarIdx}" loading="lazy" />`;
+    const avatarImgHtml = `<img src="assets/humaaans/webp/hu_avatar_${avatarIdx}.webp" class="humaaan-avatar-img" alt="Avatar ${avatarIdx}" loading="lazy" />`;
 
     // Render clipped face into all avatar circles
     document.querySelectorAll('.avatar-circle, #userAvatarCircle, #homeUserAvatarCircle').forEach(c => {
@@ -306,8 +342,8 @@ export class AuthManager {
         card.removeAttribute('hidden');
         card.style.display = 'flex';
         card.innerHTML = `
-          <div class="active-card-avatar">
-            <img src="assets/humaaans/webp/hu_stand_${avatarIdx}.webp" class="humaaan-avatar-img" alt="Avatar">
+          <div class="active-card-avatar" title="Click a face below to change your avatar">
+            <img src="assets/humaaans/webp/hu_avatar_${avatarIdx}.webp" class="humaaan-avatar-img" alt="Avatar">
           </div>
           <div class="active-card-meta">
             <div class="active-card-header">
@@ -330,6 +366,8 @@ export class AuthManager {
         card.innerHTML = '';
       }
     });
+
+    this.populateAvatarGrids();
   }
 
   init() {

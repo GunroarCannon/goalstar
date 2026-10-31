@@ -471,6 +471,17 @@
       <!-- Active Profile Card when logged in -->
       <div class="active-profile-card" id="activeProfileCard" hidden></div>
 
+      <!-- Choose / Change Face PFP Section directly in Profile Dialog -->
+      <div class="profile-pfp-box" id="profilePfpBox">
+        <div class="profile-pfp-header">
+          <span class="profile-pfp-title">Change Face / PFP</span>
+          <span class="profile-pfp-hint">Click any face to update</span>
+        </div>
+        <div class="avatar-picker-grid" id="modalAvatarPickerGrid">
+          <!-- 24 Humaaans avatars rendered by auth.js -->
+        </div>
+      </div>
+
       <div class="login-options">
         <div class="login-option" id="loginGuestOpt">
           <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
@@ -583,7 +594,7 @@
 
     function renderAvatar(container, index) {
       if (!container) return;
-      container.innerHTML = `<img src="assets/humaaans/webp/hu_stand_${index}.webp" class="humaaan-avatar-img" alt="Avatar ${index}" loading="lazy">`;
+      container.innerHTML = `<img src="assets/humaaans/webp/hu_avatar_${index}.webp" class="humaaan-avatar-img" alt="Avatar ${index}" loading="lazy">`;
       container.dataset.avatar = index;
     }
 
@@ -602,7 +613,7 @@
         btn.className = 'avatar-opt' + (i === current ? ' selected' : '');
         btn.title = 'Humaaan ' + i;
         btn.dataset.avatarIndex = i;
-        btn.innerHTML = `<img src="assets/humaaans/webp/hu_stand_${i}.webp" class="humaaan-avatar-img" alt="Avatar ${i}" loading="lazy">`;
+        btn.innerHTML = `<img src="assets/humaaans/webp/hu_avatar_${i}.webp" class="humaaan-avatar-img" alt="Avatar ${i}" loading="lazy">`;
         btn.addEventListener('click', () => {
           grid.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
