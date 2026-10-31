@@ -1,18 +1,30 @@
 {
   "name": "goalstar",
   "version": 2,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/api"
     },
     {
-      "source": "/home",
-      "destination": "/home.html"
+      "src": "/css/(.*)",
+      "dest": "/css/$1"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api"
+      "src": "/js/(.*)",
+      "dest": "/js/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/home",
+      "dest": "/home.html"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
     }
   ]
 }

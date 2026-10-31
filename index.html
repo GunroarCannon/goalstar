@@ -36,17 +36,24 @@
     <select id="boardPick" title="Your goals" aria-label="Your goals"></select>
     <button id="newGoalBtn" class="engraved-btn" title="New goal"><span aria-hidden="true">+</span><span class="txt"> New goal</span></button>
     <button id="newMilestoneBtn" class="engraved-btn" title="Create a new milestone on the canvas"><span aria-hidden="true">+</span><span class="txt"> Milestone</span></button>
+
+    <!-- Search bar -->
+    <div class="topbar-search">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="topbarSearch" class="topbar-search-input" placeholder="Find goals, users, or agents…" autocomplete="off" aria-label="Search goals">
+    </div>
+
     <div class="spacer"></div>
     <button id="dreamBtn" class="primary engraved-btn" title="Generate states and actions with an AI dreamer">Dream</button>
     <button id="searchBtn" class="gold engraved-btn" title="A* search for the lowest-cost path from START to GOAL">Search</button>
     <button id="stopBtn" hidden title="Stop dreaming and keep what has been added so far"><span class="txt">Stop</span></button>
     <button id="syncBtn" class="icon" title="Sync with GitHub Gist" aria-label="Sync"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></button>
-    
-    <!-- Explainer Guide (bounces if not yet pressed) -->
+
+    <!-- Explainer Guide -->
     <button id="uiGuideBtn" class="guide-btn engraved-btn tour-bounce-btn" title="Open Interactive UI Explainer Guide"><span style="color:var(--accent); font-weight:800;">?</span> Guide</button>
 
-    <!-- Curated Themes Selector -->
-    <select id="themeSelect" class="theme-select engraved-select" title="Choose a theme">
+    <!-- Hidden theme select (still wired in theme.js, but hidden from topbar — use Settings dialog) -->
+    <select id="themeSelect" class="theme-select engraved-select" title="Choose a theme" style="display:none;">
       <option value="simple-dark">Minimal Dark</option>
       <option value="simple-light">Minimal Light</option>
       <option value="notebook">Notebook</option>
@@ -57,28 +64,40 @@
       <option value="terminal">Terminal</option>
     </select>
 
-    <!-- Engraved Pill Switches -->
-    <div class="engraved-switch" id="themeSwitch" role="button" tabindex="0" title="Toggle Light / Dark Mode">
-      <div class="switch-track">
-        <div class="switch-knob"></div>
-        <span class="track-label">LIGHT</span>
-      </div>
-    </div>
-    <div class="engraved-switch active" id="soundSwitch" role="button" tabindex="0" title="Toggle Snappy Sound">
-      <div class="switch-track">
-        <div class="switch-knob"></div>
-        <span class="track-label">AUDIO</span>
-      </div>
-    </div>
+    <!-- 3D Toggle: Dark / Light -->
+    <button class="btn-3d-toggle" id="themeSwitch" role="switch" title="Toggle Light / Dark Mode" aria-label="Toggle light/dark" tabindex="0">
+      <span class="btn-3d-face">
+        <span class="toggle-icon-light">☀️</span>
+        <span class="toggle-icon-dark">🌙</span>
+      </span>
+    </button>
 
+    <!-- 3D Toggle: Mute / Unmute -->
+    <button class="btn-3d-toggle" id="soundSwitch" role="switch" title="Toggle Sound" aria-label="Toggle sound" tabindex="0">
+      <span class="btn-3d-face">
+        <span class="toggle-icon-sound">🔊</span>
+        <span class="toggle-icon-mute">🔇</span>
+      </span>
+    </button>
+
+    <!-- Hidden legacy toggle buttons kept for JS compatibility -->
     <button id="themeToggleBtn" class="theme-toggle-btn" hidden></button>
     <button id="soundToggleBtn" class="sound-toggle-btn" hidden></button>
+
     <button id="loginBtn" class="login-btn engraved-btn" title="Log In or Connect Wallet">Log In</button>
-    <div id="userBadge" class="user-badge" hidden>
-      <span class="indicator live"></span>
-      <span id="userName" class="user-name">Guest</span>
-      <button id="logoutBtn" class="logout-link">logout</button>
+
+    <!-- Humaaans Avatar Profile Badge (class="user-badge" kept for auth.js compatibility) -->
+    <div id="userBadge" class="user-badge user-badge-v2" hidden title="Your profile">
+      <div class="avatar-circle" id="userAvatarCircle" data-avatar="0">
+        <!-- Avatar SVG rendered by JS -->
+      </div>
+      <div class="user-info-stack">
+        <span class="live-dot"></span>
+        <span id="userName" class="user-name"></span>
+      </div>
+      <button id="logoutBtn" class="logout-link" title="Logout">↩</button>
     </div>
+
     <button id="settingsBtn" class="icon" title="Settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </header>
 
@@ -396,6 +415,14 @@
         </div>
       </fieldset>
 
+      <fieldset>
+        <legend>Profile &amp; Avatar</legend>
+        <p class="muted small" style="margin-bottom:10px;">Choose your avatar — shown next to your name in the topbar.</p>
+        <div class="avatar-picker-grid" id="avatarPickerGrid">
+          <!-- Avatar options rendered by JS -->
+        </div>
+      </fieldset>
+
       <div class="actions">
         <button value="cancel" formnovalidate>Cancel</button>
         <button value="ok" class="primary">Save</button>
@@ -523,5 +550,115 @@
       <button type="button" id="closeGuideDlgBtn">Close Guide</button>
     </div>
   </dialog>
+  <!-- Avatar + 3D Toggle Init -->
+  <script>
+  (function() {
+    const HUMAAANS = [
+      // Avatar 0: warm skin, dark hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#FDBCB4"/><ellipse cx="30" cy="20" rx="10" ry="11" fill="#2D1B00"/><circle cx="30" cy="24" r="11" fill="#FDBCB4"/><ellipse cx="26" cy="22" rx="2" ry="2.5" fill="#4A3728"/><ellipse cx="34" cy="22" rx="2" ry="2.5" fill="#4A3728"/><path d="M26 28 Q30 32 34 28" stroke="#C2776A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#E76F51"/></svg>`,
+      // Avatar 1: light skin, blonde
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#FFE0BD"/><ellipse cx="30" cy="19" rx="10" ry="9" fill="#F4D06F"/><circle cx="30" cy="24" r="11" fill="#FFE0BD"/><ellipse cx="26" cy="23" rx="2" ry="2.5" fill="#5C4033"/><ellipse cx="34" cy="23" rx="2" ry="2.5" fill="#5C4033"/><path d="M26 29 Q30 33 34 29" stroke="#C2776A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#2196F3"/></svg>`,
+      // Avatar 2: medium-dark skin, afro
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="19" r="13" fill="#3D1A00"/><circle cx="30" cy="24" r="11" fill="#C68642"/><ellipse cx="26" cy="23" rx="2" ry="2.5" fill="#2D1B00"/><ellipse cx="34" cy="23" rx="2" ry="2.5" fill="#2D1B00"/><path d="M26 29 Q30 33 34 29" stroke="#9B5E3A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#9C27B0"/></svg>`,
+      // Avatar 3: olive skin, dark straight hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#D4A574"/><ellipse cx="30" cy="17" rx="11" ry="8" fill="#1A0A00"/><ellipse cx="20" cy="24" rx="3" ry="6" fill="#1A0A00"/><ellipse cx="40" cy="24" rx="3" ry="6" fill="#1A0A00"/><circle cx="30" cy="24" r="11" fill="#D4A574"/><ellipse cx="26.5" cy="23" rx="1.8" ry="2.2" fill="#3E2723"/><ellipse cx="33.5" cy="23" rx="1.8" ry="2.2" fill="#3E2723"/><path d="M27 29 Q30 32.5 33 29" stroke="#A0522D" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#4CAF50"/></svg>`,
+      // Avatar 4: fair skin, red hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#FFD5C8"/><ellipse cx="30" cy="18" rx="11" ry="10" fill="#C0392B"/><ellipse cx="20" cy="26" rx="2.5" ry="5" fill="#C0392B"/><ellipse cx="40" cy="26" rx="2.5" ry="5" fill="#C0392B"/><circle cx="30" cy="24" r="11" fill="#FFD5C8"/><ellipse cx="26" cy="23" rx="1.8" ry="2.2" fill="#795548"/><ellipse cx="34" cy="23" rx="1.8" ry="2.2" fill="#795548"/><path d="M26 29 Q30 33 34 29" stroke="#D4776A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#FF9800"/></svg>`,
+      // Avatar 5: dark skin, short hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="22" r="14" fill="#6D4C41"/><ellipse cx="30" cy="18" rx="10" ry="7" fill="#1B0000"/><circle cx="30" cy="24" r="11" fill="#8D5524"/><ellipse cx="26" cy="23" rx="2" ry="2.5" fill="#1B0000"/><ellipse cx="34" cy="23" rx="2" ry="2.5" fill="#1B0000"/><path d="M26 29 Q30 33 34 29" stroke="#6D3B2E" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#607D8B"/></svg>`,
+      // Avatar 6: light skin, bun
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="24" r="11" fill="#FFDCC2"/><circle cx="30" cy="14" r="6" fill="#4A2800"/><ellipse cx="30" cy="18" rx="9" ry="5" fill="#4A2800"/><ellipse cx="26" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><ellipse cx="34" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><path d="M26 29 Q30 33 34 29" stroke="#BF7A6A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#E91E63"/></svg>`,
+      // Avatar 7: medium skin, curly hair
+      `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="24" r="11" fill="#E8B89A"/><circle cx="22" cy="18" r="6" fill="#2C1810"/><circle cx="30" cy="15" r="7" fill="#2C1810"/><circle cx="38" cy="18" r="6" fill="#2C1810"/><ellipse cx="26" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><ellipse cx="34" cy="23" rx="1.8" ry="2.2" fill="#4E342E"/><path d="M26 29 Q30 33 34 29" stroke="#BF7A6A" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="16" y="34" width="28" height="26" rx="6" fill="#00BCD4"/></svg>`,
+    ];
+
+    // ─── Render avatar into a container element ───────────────────────────
+    function renderAvatar(container, index) {
+      if (!container) return;
+      container.innerHTML = HUMAAANS[index] || HUMAAANS[0];
+      container.dataset.avatar = index;
+    }
+
+    // ─── Load saved avatar index (default 0) ─────────────────────────────
+    function getSavedAvatar() {
+      try { return parseInt(localStorage.getItem('goalstar_avatar') || '0', 10); } catch(e) { return 0; }
+    }
+
+    // ─── Render topbar avatar circle ──────────────────────────────────────
+    const topbarCircle = document.getElementById('userAvatarCircle');
+    renderAvatar(topbarCircle, getSavedAvatar());
+
+    // ─── Build avatar picker grid in settings dialog ──────────────────────
+    function buildAvatarPicker() {
+      const grid = document.getElementById('avatarPickerGrid');
+      if (!grid || grid.dataset.built) return;
+      grid.dataset.built = '1';
+      const saved = getSavedAvatar();
+      HUMAAANS.forEach((svg, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'avatar-opt' + (i === saved ? ' selected' : '');
+        btn.title = 'Avatar ' + (i + 1);
+        btn.dataset.avatarIndex = i;
+        btn.innerHTML = svg;
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          try { localStorage.setItem('goalstar_avatar', i); } catch(e) {}
+          renderAvatar(topbarCircle, i);
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    // Build picker when settings dialog opens
+    const settingsDlg = document.getElementById('settingsDlg');
+    if (settingsDlg) {
+      settingsDlg.addEventListener('click', buildAvatarPicker, { once: false });
+      // Also wire to the settings button
+      const settingsBtn = document.getElementById('settingsBtn');
+      if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
+    }
+
+    // ─── 3D Toggle visual state sync ─────────────────────────────────────
+    // theme.js and sound.js already manage the `.active` class via their own
+    // `applyTheme()` / `updateUI()` calls using the same element IDs.
+    // We just need to ensure the initial visual state reflects localStorage.
+    function syncThemeToggle() {
+      const sw = document.getElementById('themeSwitch');
+      if (!sw) return;
+      try {
+        const preset = localStorage.getItem('goalstar_theme_preset') || 'notebook';
+        const darkPresets = ['night', 'blueprint', 'terminal', 'simple-dark'];
+        const isDark = darkPresets.includes(preset);
+        sw.classList.toggle('active', isDark);
+        sw.setAttribute('aria-checked', isDark ? 'true' : 'false');
+      } catch(e) {}
+    }
+
+    function syncSoundToggle() {
+      const sw = document.getElementById('soundSwitch');
+      if (!sw) return;
+      try {
+        const enabled = localStorage.getItem('goalstar_sound_enabled') !== 'false';
+        sw.classList.toggle('active', enabled);
+        sw.setAttribute('aria-checked', enabled ? 'true' : 'false');
+      } catch(e) {}
+    }
+
+    syncThemeToggle();
+    syncSoundToggle();
+
+    // Re-sync theme toggle whenever theme changes (theme.js fires this event)
+    document.addEventListener('goalstar:theme', (e) => {
+      const sw = document.getElementById('themeSwitch');
+      if (sw && e.detail) {
+        sw.classList.toggle('active', !!e.detail.isDark);
+        sw.setAttribute('aria-checked', e.detail.isDark ? 'true' : 'false');
+      }
+    });
+  })();
+  </script>
+
 </body>
 </html>
