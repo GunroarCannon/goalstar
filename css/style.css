@@ -3785,100 +3785,161 @@ html[data-theme-mode='dark'] .btn-3d-toggle:hover .btn-3d-face {
   box-shadow: 0 0 0 3px rgba(5,150,105,0.3);
 }
 
-/* ─── Mobile Responsiveness (< 768px, < 520px, < 380px) ─────────────── */
+/* ─── Modal Dialog Styling & Mobile Overrides ─────────────── */
+dialog.crunchy-modal,
+dialog#loginDlg {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+  max-width: 95vw !important;
+  width: 100% !important;
+}
+
+@media (max-width: 480px) {
+  .modal-card {
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
+    max-height: 90vh !important;
+  }
+  .modal-head h3 {
+    font-size: 16px !important;
+  }
+  .login-option {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+  .login-option .opt-info {
+    width: 100% !important;
+  }
+  .login-option .mini-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 8px 10px !important;
+    margin-top: 4px !important;
+  }
+  .login-option.email-opt .opt-info > div {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+  .login-option.email-opt .opt-info input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ─── Mobile Responsiveness (< 768px, < 540px, < 400px) ─────────────── */
 @media (max-width: 768px) {
   html, body {
     overflow-x: hidden !important;
     width: 100% !important;
+    max-width: 100vw !important;
   }
   .topbar {
-    padding: 6px 8px;
-    gap: 6px;
-    min-height: 48px;
+    padding: 4px 6px !important;
+    gap: 5px !important;
+    min-height: 44px !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
-  .brand .word {
-    font-size: 19px;
+  /* Hide non-essential buttons to unclutter topbar on mobile */
+  #newMilestoneBtn,
+  #uiGuideBtn,
+  #syncBtn,
+  #stopBtn {
+    display: none !important;
   }
-  .logo, .logo-mark {
-    width: 26px;
-    height: 26px;
-  }
-  .goal-select-wrap {
-    max-width: 130px;
-    min-width: 80px;
-  }
-  #goalSelect {
-    font-size: 12px;
-    padding: 4px 6px;
-  }
-  .search-wrap {
-    max-width: 130px;
-  }
-  #searchGoalsInput {
-    font-size: 11.5px;
-    padding: 4px 8px;
+  /* Collapse text inside buttons so only icon shows */
+  .topbar #newGoalBtn .txt {
+    display: none !important;
   }
   #newGoalBtn {
-    padding: 5px 8px;
-    font-size: 12px;
-    white-space: nowrap;
+    padding: 4px 8px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
   }
-  .home-link, #toolsBtn {
-    padding: 5px 8px;
-    font-size: 12px;
+  /* Compact board selector */
+  #boardPick {
+    max-width: 110px !important;
+    min-width: 65px !important;
+    font-size: 11px !important;
+    padding: 3px 6px !important;
+    text-overflow: ellipsis !important;
   }
-  #uiGuideBtn {
-    display: none;
+  /* Compact search */
+  .topbar-search {
+    max-width: 110px !important;
+    min-width: 50px !important;
   }
+  .topbar-search-input {
+    font-size: 11px !important;
+    padding: 4px 6px 4px 22px !important;
+  }
+  /* Action buttons */
+  #dreamBtn, #searchBtn {
+    padding: 4px 8px !important;
+    font-size: 11.5px !important;
+  }
+  /* 3D toggles scaled for mobile fingers without wrapping */
   .btn-3d-toggle {
-    width: 32px;
-    height: 26px;
+    width: 28px !important;
+    height: 26px !important;
+    min-width: 28px !important;
+    padding: 0 !important;
   }
-  .user-badge-v2 .user-name {
-    display: none;
+  /* User badge and auth buttons */
+  .user-badge-v2 .user-name,
+  .user-badge-v2 .logout-link {
+    display: none !important;
   }
   .user-badge-v2 {
-    padding: 2px 5px;
-    gap: 4px;
+    padding: 2px 4px !important;
+    gap: 0 !important;
+  }
+  .topbar #loginBtn {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+  #settingsBtn {
+    width: 28px !important;
+    height: 26px !important;
+    min-width: 28px !important;
+    padding: 4px !important;
   }
 }
 
-@media (max-width: 520px) {
-  .topbar {
-    gap: 4px;
-    padding: 4px 6px;
-  }
-  .search-wrap {
-    display: none;
-  }
+@media (max-width: 540px) {
   .brand .word {
-    display: none;
+    display: none !important;
   }
-  .goal-select-wrap {
-    max-width: 95px;
+  .logo, .logo-mark {
+    width: 26px !important;
+    height: 26px !important;
   }
-  #goalSelect {
-    font-size: 11px;
-    padding: 3px 5px;
+  .topbar-search {
+    display: none !important;
   }
-  #newGoalBtn {
-    padding: 4px 7px;
-    font-size: 11px;
+  #boardPick {
+    max-width: 85px !important;
   }
-  .home-link, #toolsBtn {
-    padding: 4px 6px;
-    font-size: 11px;
-  }
-  .user-badge-v2 .logout-link {
-    display: none;
+  #dreamBtn, #searchBtn {
+    padding: 3px 6px !important;
+    font-size: 10.5px !important;
   }
 }
 
 @media (max-width: 380px) {
-  .home-link {
-    display: none;
+  #boardPick {
+    max-width: 60px !important;
+    font-size: 10px !important;
   }
-  #toolsDropdown {
-    display: none;
+  #dreamBtn {
+    padding: 3px 5px !important;
+    font-size: 10px !important;
   }
 }
