@@ -25,3 +25,5 @@ tour_screenshots/
 data/blobs/
 data/blobs.json
 data/templates.json
+
+.vercel
