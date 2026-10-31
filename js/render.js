@@ -170,6 +170,13 @@ export class Canvas {
       this.zoomAt(this.view.k * Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top);
     }, { passive: false });
 
+    root.addEventListener('click', (e) => {
+      if (this.linkFrom && !e.target.closest('.node, .elabel, .zoombar, .minimap, .link-banner')) {
+        const p = this.toWorld(e.clientX, e.clientY);
+        this.h.onLinkBackgroundClick?.(this.linkFrom, p.x - CARD_W / 2, p.y - 30);
+      }
+    });
+
     root.addEventListener('dblclick', (e) => {
       if (e.target.closest('.node, .elabel, .zoombar, .minimap')) return;
       const p = this.toWorld(e.clientX, e.clientY);
@@ -191,6 +198,7 @@ export class Canvas {
       e.stopPropagation();
       const id = el.dataset.id;
       if (e.target.closest('.tick')) { this.h.onToggleDone(id); return; }
+      if (e.target.closest('.node-attach-btn')) { this.h.onAttachChild?.(id); return; }
       if (this.linkFrom) { this.h.onLink(this.linkFrom, id); return; }
       const n = this.board.nodes[id];
       const sx = e.clientX, sy = e.clientY, nx = n.x, ny = n.y;
@@ -222,7 +230,39 @@ export class Canvas {
       const el = e.target.closest('.elabel');
       if (!el) return;
       e.stopPropagation();
-      this.h.onSelect({ type: 'edge', id: el.dataset.id });
+      const id = el.dataset.id;
+      const edge = this.board?.edges?.[id];
+      if (!edge) return;
+
+      const sx = e.clientX, sy = e.clientY;
+      const initOx = edge.ox || 0, initOy = edge.oy || 0;
+      let moved = false;
+      el.setPointerCapture(e.pointerId);
+
+      const move = (ev) => {
+        const dx = (ev.clientX - sx) / this.view.k;
+        const dy = (ev.clientY - sy) / this.view.k;
+        if (!moved && Math.abs(dx) + Math.abs(dy) < 4 / this.view.k) return;
+        if (!moved) el.classList.add('dragging');
+        moved = true;
+        edge.ox = initOx + dx;
+        edge.oy = initOy + dy;
+        this.drawEdges();
+      };
+
+      const up = () => {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        el.classList.remove('dragging');
+        if (moved) {
+          if (this.h.onEdgeMoved) this.h.onEdgeMoved(id);
+        } else {
+          this.h.onSelect({ type: 'edge', id });
+        }
+      };
+
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
     });
 
     // Minimap: click or drag to move the camera there.
@@ -300,6 +340,7 @@ export class Canvas {
       el.className = [
         'node', `k-${n.kind}`,
         n.done && n.kind !== 'start' ? 'done' : '',
+        n.blocked ? `blocked ${n.blocked.level}` : '',
         o.path?.nodes.has(n.id) ? 'hot' : '',
         sel.type === 'node' && sel.id === n.id ? 'sel' : '',
         o.pulse === n.id ? 'pulse' : '',
@@ -339,7 +380,7 @@ export class Canvas {
       const done = stepsDone(e);
       r.label.title = `${e.label}${e.note ? '\n\n' + e.note : ''}`;
       r.label.innerHTML = `<div class="el-t">${esc(e.label)}</div>
-        <div class="el-m"><span class="cost" style="--c:${costColor(c)}" title="cost with your weights">${fmt(c)}</span><span class="dur">${esc(durationText(e))}</span>${done ? `<span class="chk">☑ ${done}</span>` : ''}</div>`;
+        <div class="el-m"><span class="cost" style="--c:${costColor(c)}" title="cost with your weights">${fmt(c)}</span><span class="dur">${esc(durationText(e))}</span>${done ? `<span class="chk"> ${done}</span>` : ''}</div>`;
     }
     for (const [id, r] of this.edgeEls) if (!board.edges[id]) { r.hl.remove(); r.ink.remove(); r.label.remove(); this.edgeEls.delete(id); this.drawing.delete(id); }
     for (const [id, r] of this.edgeEls) this.lsizes[id] = { w: r.label.offsetWidth, h: r.label.offsetHeight };
@@ -348,18 +389,49 @@ export class Canvas {
   }
 
   cardHtml(n, o, show, hMax) {
-    const kindTag = n.kind === 'goal' ? '★ goal' : n.kind === 'start' ? '● you are here' : '';
+    const kindTag = n.kind === 'goal' ? 'Goal' : n.kind === 'start' ? 'You are here' : '';
     const g = o.g?.get(n.id);
     const h = n.kind === 'goal' ? 0 : n.h;
-    const near = n.kind === 'start' ? 0 : n.kind === 'goal' || n.done ? 1 : Number.isFinite(h) ? 1 - h / hMax : null;
+
+    // Check incoming actions leading to this node
+    const incoming = this.board ? Object.values(this.board.edges).filter(e => e.to === n.id) : [];
+    const totalSteps = incoming.reduce((sum, e) => sum + (e.steps?.length || 0), 0);
+    const doneSteps = incoming.reduce((sum, e) => sum + (e.steps?.filter(s => s.done).length || 0), 0);
+
+    let progress = null;
+    let titleHint = 'Closeness to the goal';
+
+    if (n.kind === 'start') {
+      progress = 0;
+    } else if (n.done) {
+      progress = 1.0;
+      titleHint = 'Milestone achieved (100%)';
+    } else if (totalSteps > 0) {
+      // Checklist completion directly drives progress!
+      progress = doneSteps / totalSteps;
+      if (!Number.isFinite(progress)) progress = 0;
+      titleHint = `${doneSteps}/${totalSteps} checklist steps completed (${Math.round(progress * 100)}%)`;
+    } else if (n.kind === 'goal') {
+      progress = 0;
+    } else if (Number.isFinite(h) && Number.isFinite(hMax) && hMax > 0) {
+      progress = Math.max(0, Math.min(1, 1 - h / hMax));
+      if (!Number.isFinite(progress)) progress = 0;
+      titleHint = `Heuristic progress (${Math.round(progress * 100)}%)`;
+    }
+
+    const pct = (progress != null && Number.isFinite(progress)) ? Math.max(0, Math.min(100, Math.round(progress * 100))) : 0;
+    const stepBadge = totalSteps > 0 ? `<span class="card-step-badge" title="${doneSteps} of ${totalSteps} checklist steps completed">${doneSteps}/${totalSteps}</span>` : '';
     const nums = show.numbers !== false && n.kind !== 'start'
       ? `<span>h ${fmt(h)}</span>${g != null && g > 0 ? `<span>g ${fmt(g)}</span>` : ''}` : '';
+
     return `
-      ${n.kind === 'start' ? '' : `<button class="tick" title="${n.done ? 'Achieved — click to undo' : 'Mark as achieved'}">${n.done ? '✓' : ''}</button>`}
+      ${n.kind === 'start' ? '' : `<button class="tick" aria-label="${n.done ? 'Achieved — click to undo' : 'Mark as achieved'}" title="${n.done ? 'Achieved — click to undo' : 'Mark as achieved'}">${n.done ? '<svg class="tick-svg" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 6.2 L4.8 9 L10 3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</button>`}
+      ${n.kind !== 'goal' ? `<button class="node-attach-btn" data-act="attach-child" title="Attach next milestone" aria-label="Attach next milestone">+</button>` : ''}
       ${kindTag ? `<div class="nk">${kindTag}</div>` : ''}
+      ${n.blocked ? `<div class="block-stamp ${n.blocked.level}" title="${esc(n.blocked.reason || '')}">${n.blocked.level === 'impossible' ? 'Out of reach' : 'Very expensive'}${n.blocked.reason ? ` · ${esc(String(n.blocked.reason).slice(0, 34))}` : ''}</div>` : ''}
       <div class="nl">${esc(n.label)}</div>
       ${show.notes !== false && n.note && n.kind !== 'start' ? `<div class="nn">${esc(n.note)}</div>` : ''}
-      ${nums || near != null ? `<div class="nm">${nums}${near != null && n.kind === 'state' ? `<span class="near" title="closeness to the goal"><i style="width:${Math.round(near * 100)}%"></i></span>` : ''}</div>` : ''}`;
+      ${nums || progress != null ? `<div class="nm">${nums}${stepBadge}${progress != null && n.kind === 'state' ? `<span class="near" title="${esc(titleHint)}"><i style="width:${pct}%"></i></span>` : ''}</div>` : ''}`;
   }
 
   kick() {
@@ -396,7 +468,11 @@ export class Canvas {
       const a = this.disp.get(e.from), b = this.disp.get(e.to);
       if (!r || !a || !b) continue;
       const sa = this.sizes[e.from] || { w: CARD_W, h: 80 }, sb = this.sizes[e.to] || { w: CARD_W, h: 80 };
-      const x1 = a.x + sa.w, y1 = a.y + sa.h / 2, x2 = b.x - 5, y2 = b.y + sb.h / 2;
+      const x1 = Number.isFinite(a.x) ? a.x + (sa.w || CARD_W) : 80;
+      const y1 = Number.isFinite(a.y) ? a.y + (sa.h || 80) / 2 : 80;
+      const x2 = Number.isFinite(b.x) ? b.x - 5 : 300;
+      const y2 = Number.isFinite(b.y) ? b.y + (sb.h || 80) / 2 : 80;
+      if (!Number.isFinite(x1) || !Number.isFinite(y1) || !Number.isFinite(x2) || !Number.isFinite(y2)) continue;
       const dx = Math.max(70, Math.abs(x2 - x1) / 2);
       const c1x = x1 + dx, c2x = x2 - dx;
       const d = `M${x1},${y1} C${c1x},${y1} ${c2x},${y2} ${x2},${y2}`;
@@ -425,7 +501,17 @@ export class Canvas {
         p = bez(best);
       }
       const s = this.lsizes[e.id] || { w: LABEL_W, h: 40 };
-      labels.push({ r, x: p.x, y: p.y, w: s.w, h: s.h });
+      const ox = e.ox || 0, oy = e.oy || 0;
+      const mx = p.x + ox, my = p.y + oy;
+      if (ox || oy) {
+        // Curve control point positioned so quadratic bezier passes EXACTLY through (mx, my) at t = 0.5
+        const ctrlX = 2 * mx - (x1 + x2) / 2;
+        const ctrlY = 2 * my - (y1 + y2) / 2;
+        const dCurve = `M${x1},${y1} Q${ctrlX},${ctrlY} ${x2},${y2}`;
+        r.ink.setAttribute('d', dCurve);
+        r.hl.setAttribute('d', isHot ? dCurve : '');
+      }
+      labels.push({ r, e, isHot, x1, y1, x2, y2, origY: p.y, x: mx, y: my, w: s.w, h: s.h });
     }
 
     // Nudge overlapping labels apart vertically.
@@ -436,7 +522,18 @@ export class Canvas {
         if (Math.abs(A.x - B.x) < (A.w + B.w) / 2 + 4 && Math.abs(A.y - B.y) < (A.h + B.h) / 2 + 3) B.y = A.y + (A.h + B.h) / 2 + 3;
       }
     }
-    for (const l of labels) { l.r.label.style.left = `${l.x}px`; l.r.label.style.top = `${l.y}px`; }
+    for (const l of labels) {
+      l.r.label.style.left = `${l.x}px`;
+      l.r.label.style.top = `${l.y}px`;
+      // Ensure the action line dynamically passes directly through the action node
+      if (l.e && (l.e.ox || l.e.oy || Math.abs(l.y - l.origY) > 0.5)) {
+        const ctrlX = 2 * l.x - (l.x1 + l.x2) / 2;
+        const ctrlY = 2 * l.y - (l.y1 + l.y2) / 2;
+        const dCurve = `M${l.x1},${l.y1} Q${ctrlX},${ctrlY} ${l.x2},${l.y2}`;
+        l.r.ink.setAttribute('d', dCurve);
+        l.r.hl.setAttribute('d', l.isHot ? dCurve : '');
+      }
+    }
 
     // Ink flowing along the best path.
     const key = hot.join(',');
@@ -459,7 +556,7 @@ export class Canvas {
     g.className = 'ghost';
     g.style.left = `${d.x + s.w + 120}px`;
     g.style.top = `${d.y + s.h / 2 - 34}px`;
-    g.innerHTML = '<span class="spin">✦</span> dreaming<span class="dots"><i>.</i><i>.</i><i>.</i></span>';
+    g.innerHTML = '<span class="spin">*</span> dreaming<span class="dots"><i>.</i><i>.</i><i>.</i></span>';
     this.fxEl.append(g);
   }
 
@@ -468,7 +565,7 @@ export class Canvas {
     if (!this.motion) return;
     const d = this.disp.get(id), s = this.sizes[id];
     if (!d || !s) return;
-    const glyphs = ['★', '✦', '✧', '•'];
+    const glyphs = ['*', '*', '*', '•'];
     for (let i = 0; i < count; i++) {
       const p = document.createElement('span');
       p.className = 'spark';
@@ -579,6 +676,20 @@ export class Canvas {
     if (!n) return;
     const s = this.sizes[id] || { w: CARD_W, h: 80 };
     const W = this.root.clientWidth, H = this.root.clientHeight, k = this.view.k;
-    this.setView({ k, x: W / 2 - (n.x + s.w / 2) * k, y: H / 2 - (n.y + s.h / 2) * k }, animate);
+    const sideOffset = window.innerWidth > 900 ? 110 : 0;
+    this.setView({ k, x: (W / 2 + sideOffset) - (n.x + s.w / 2) * k, y: H / 2 - (n.y + s.h / 2) * k }, animate);
+  }
+
+  centerOnEdge(edgeId, animate = true) {
+    const e = this.board?.edges[edgeId];
+    if (!e) return;
+    const a = this.board.nodes[e.from], b = this.board.nodes[e.to];
+    if (!a || !b) return;
+    const sa = this.sizes[e.from] || { w: CARD_W, h: 80 }, sb = this.sizes[e.to] || { w: CARD_W, h: 80 };
+    const midX = (a.x + sa.w + b.x) / 2;
+    const midY = (a.y + sa.h / 2 + b.y + sb.h / 2) / 2;
+    const W = this.root.clientWidth, H = this.root.clientHeight, k = this.view.k;
+    const sideOffset = window.innerWidth > 900 ? 110 : 0;
+    this.setView({ k, x: (W / 2 + sideOffset) - midX * k, y: H / 2 - midY * k }, animate);
   }
 }

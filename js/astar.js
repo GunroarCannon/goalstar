@@ -1,18 +1,20 @@
-// A* over the goal graph.
+// A* over the goal graph with dynamic Walrus Memory Friction Modulation.
 // g = summed action cost from any achieved state, h = node.h (the dreamer's
 // estimate of remaining cost). Costs are a weighted average of four 0–10
 // ratings, so "weights" are how much you care about time vs money vs effort vs risk.
 
 const KEYS = ['time', 'money', 'effort', 'risk'];
 
-export function edgeCost(e, w) {
+export function edgeCost(e, w, frictionFn = null) {
   let s = 0, ws = 0;
   for (const k of KEYS) {
     const wk = w?.[k] ?? 1;
     s += wk * (e.cost?.[k] ?? 3);
     ws += wk;
   }
-  return ws ? s / ws : 0;
+  const baseCost = ws ? s / ws : 0;
+  const friction = frictionFn ? frictionFn(e.label || '') : (e.friction || 0);
+  return baseCost + friction;
 }
 
 export const isAchieved = (n) => !!n && (n.kind === 'start' || n.done);
@@ -22,14 +24,18 @@ export function heuristic(board) {
 }
 
 // opts.fromStart: plan from the start only, as if nothing were achieved yet (for progress).
+// opts.frictionFn: optional callback (edgeLabel) => number to inject live Walrus memory friction penalties.
 export function astar(board, w, opts = {}) {
   const { nodes, goalId } = board;
   const out = {};
   for (const e of Object.values(board.edges)) (out[e.from] ||= []).push(e);
   const h = heuristic(board);
+  const frictionFn = opts.frictionFn || null;
 
   const g = new Map(), came = new Map(), open = new Set(), closed = new Set(), explored = [];
   for (const n of Object.values(nodes)) {
+    // A milestone marked out of reach can never be true, so it is not a seed either.
+    if (n.blocked?.level === 'impossible') continue;
     if (opts.fromStart ? n.id === board.startId : isAchieved(n)) { g.set(n.id, 0); open.add(n.id); }
   }
 
@@ -56,8 +62,13 @@ export function astar(board, w, opts = {}) {
     }
 
     for (const e of out[cur] || []) {
-      if (!nodes[e.to]) continue;
-      const t = g.get(cur) + edgeCost(e, w);
+      const target = nodes[e.to];
+      if (!target) continue;
+      // A milestone marked out of reach (visa refused, program closed, money gone)
+      // is no longer a valid route. "Very expensive" keeps it but prices it out.
+      if (target.blocked?.level === 'impossible') continue;
+      const multiplier = target.blocked?.level === 'expensive' ? 2.5 : 1;
+      const t = g.get(cur) + edgeCost(e, w, frictionFn) * multiplier;
       if (t < (g.get(e.to) ?? Infinity)) {
         g.set(e.to, t);
         came.set(e.to, { from: cur, edge: e.id });
@@ -74,7 +85,8 @@ export function nextActions(board, w) {
   const h = heuristic(board);
   return Object.values(board.edges)
     .filter((e) => isAchieved(board.nodes[e.from]) && board.nodes[e.to] && !isAchieved(board.nodes[e.to]))
-    .map((e) => { const c = edgeCost(e, w); return { e, c, f: c + h(e.to) }; })
+    .filter((e) => board.nodes[e.to].blocked?.level !== 'impossible')
+    .map((e) => { const c = edgeCost(e, w) * (board.nodes[e.to].blocked?.level === 'expensive' ? 2.5 : 1); return { e, c, f: c + h(e.to) }; })
     .sort((a, b) => a.f - b.f);
 }
 
@@ -93,7 +105,7 @@ export function estimateMissingH(board, w) {
       }
     }
   }
-  for (const n of missing) if (est[n.id] != null) n.h = Math.round(est[n.id] * 10) / 10;
+  for (const n of missing) if (est[n.id] != null && Number.isFinite(est[n.id])) n.h = Math.round(est[n.id] * 10) / 10;
 }
 
 // The time rating (0–10) on a rough log scale: 0 ≈ an hour, 3 ≈ a week,

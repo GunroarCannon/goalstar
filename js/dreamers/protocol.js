@@ -74,18 +74,18 @@ For every state give h: your estimate of the remaining cost from that state to t
 
 Be specific and realistic for this person's situation: name real platforms, documents, programs, numbers and typical timelines. Where genuinely different routes exist, branch into alternatives so the search can compare them. Keep labels short (under ~60 characters) and put detail in notes and steps.
 
-In actions, refer to nodes by: "START" (where the person is now), "GOAL", an existing node id from the list provided, or the key of a new state you define. Every new state must be connected by at least one action.`;
+In actions, refer to nodes by: "START" (where the person is now), "GOAL", an existing node id from the list provided, or the key of a new state you define. Every new state must be connected by at least one incoming action and at least one outgoing action towards subsequent milestones or GOAL, so no state is left as an orphaned dead-end leaf node.`;
 
 const DETAIL = {
   brief: { steps: '2–3', text: 'brief. Keep notes to one short sentence; steps may be empty or 1–2 items.' },
   normal: { steps: '3–5', text: 'normal. Notes 1–2 sentences; 2–4 checklist steps per action.' },
-  detailed: { steps: '4–6', text: 'detailed. Notes 2–3 specific sentences (real names, numbers, costs); 3–6 concrete checklist steps per action.' },
-  deep: { steps: '5–8', text: 'deep. Be exhaustive: notes 2–4 sentences with specifics, tips and common pitfalls; 4–8 checklist steps per action; prefer several smaller states over a few big leaps.' },
+  detailed: { steps: '4–6', text: 'detailed. Multi-path plan with 4–5 alternative branches. Notes 2–3 specific sentences (real names, numbers, costs); 3–6 concrete checklist steps per action.' },
+  deep: { steps: '5–8', text: 'deep. Exhaustive multi-path exploration with 5+ parallel routes; notes 2–4 sentences with specifics, tips and common pitfalls; 4–8 checklist steps per action; prefer several smaller states over a few big leaps.' },
 };
 const ROUTES = {
-  one: 'Give a single best route, no alternatives.',
-  some: 'Branch into 2–3 alternative routes where they genuinely exist.',
-  many: 'Explore many alternatives: 3–5 genuinely different routes, including unconventional ones.',
+  one: 'Give a single best route with no alternatives (but still split a step where the order genuinely matters).',
+  some: 'Branch into 3–4 alternative parallel routes wherever they genuinely exist; put at least two parallel choices at the main decision points.',
+  many: 'Explore many alternative paths: 4–6 genuinely different routes, including unconventional ones. At least three decision points must have two or more outgoing actions, and all alternative branches should connect through to GOAL.',
 };
 
 export function buildUserPrompt(req) {
@@ -107,11 +107,31 @@ export function buildUserPrompt(req) {
   lines.push('');
   const max = req.params?.maxStates ?? 8;
   const detail = DETAIL[req.params?.detail] || DETAIL.normal;
+  const isDetailed = req.params?.detail === 'detailed' || req.params?.detail === 'deep';
   if (req.mode === 'dream') {
-    lines.push(`Task: map out how to get from START to GOAL. Create about ${max} new states (fewer if the goal is simple). ${ROUTES[req.params?.routes] || ROUTES.some} Every route must end with an action whose "to" is "GOAL" — do not invent a separate state that means the goal itself.`);
+    let branches = req.params?.routes === 'many' ? 5 : req.params?.routes === 'one' ? 1 : 3;
+    if (isDetailed && branches < 4) branches = 4;
+    lines.push(`Task: map out how to get from START to GOAL. Create about ${max} new states (fewer only if the goal is truly simple). Aim for at least ${branches} distinct routes or decision points so the search has multiple alternative paths to choose between. ${ROUTES[req.params?.routes] || (isDetailed ? ROUTES.many : ROUTES.some)} Every route must end with an action whose "to" is "GOAL" — do not invent a separate state that means the goal itself.`);
+    if (isDetailed || req.params?.routes === 'many') {
+      lines.push(
+        '',
+        'CRITICAL REQUIREMENT — MULTIPLE PARALLEL PATHS:',
+        'The user specifically requested a DETAILED multi-path plan. You MUST map out at least 4–6 distinct parallel routes or decision branches from START to GOAL (e.g. fast-track vs budget-friendly vs safe/traditional vs DIY).',
+        'Do NOT return a single linear chain of milestones. Decision points must branch into genuine alternatives, and EVERY branch must connect all the way through to GOAL so A* can evaluate and compare multiple complete paths.'
+      );
+    }
   } else if (req.mode === 'expand') {
     const n = req.focus.node;
-    lines.push(`Task: expand the state HERE = "${n.label}"${n.note ? ` (${n.note})` : ''}. Propose 2–4 promising next states, each reached from HERE by one action (from: "HERE"). If HERE essentially means the goal is reached, or the goal follows from HERE in one natural step, you MUST add an action from HERE to GOAL. Otherwise don't — never jump straight to GOAL from the starting situation or skip over obvious milestones. You may link to existing states when they are the natural next step.`);
+    lines.push(
+      `Task: expand the state HERE = "${n.label}"${n.note ? ` (${n.note})` : ''}. Propose 2–4 promising next states reached from HERE by actions (from: "HERE"). Include at least one genuinely different alternative route so the search has real branches to compare.`,
+      '',
+      'CRITICAL REQUIREMENT — NO DEAD-END LEAF NODES:',
+      'Newly added states must NOT be dead-end leaf nodes. Every new state MUST have at least one outgoing action that helps form a path to the goal:',
+      '1. Link to existing milestone: If an existing state (from the list of existing states below) is the natural next step, add an action from the new state to that existing state ID.',
+      '2. Link to GOAL: If the new state reaches or is adjacent to the goal, add an action from the new state to "GOAL".',
+      '3. Chain to next step: If introducing intermediate milestones, connect them sequentially towards GOAL (e.g. HERE -> newStateA -> newStateB -> GOAL or existing state ID).',
+      'Every branch created MUST provide a navigable continuation toward GOAL so A* can find a complete path through it. Never leave any new state as an isolated leaf node!'
+    );
   } else if (req.mode === 'bridge') {
     const n = req.focus.node;
     lines.push(`Task: the plan currently stops at HERE = "${n.label}"${n.note ? ` (${n.note})` : ''} without reaching the goal. Add the 0–3 remaining states and the actions needed to get from HERE (from: "HERE") all the way to GOAL. The chain MUST end with an action whose "to" is "GOAL". If the goal follows directly from HERE, return just that one action to GOAL.`);

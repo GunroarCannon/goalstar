@@ -1,0 +1,19 @@
+{
+  "name": "goalstar-recall",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GoalStar Total Recall Edition - Autonomous Habit & Workflow Watchdog Agent with Walrus Portable Memory & Tatum Sui RPC",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test:integration": "node scripts/test-walrus-tatum.js",
+    "cli": "node cli/log.js"
+  },
+  "dependencies": {
+    "@mysten-incubation/memwal": "^0.1.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

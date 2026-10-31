@@ -7,19 +7,23 @@ const SHAPE = `Reply with ONLY a JSON object of this exact shape (no prose, no m
  "actions":[{"from":"START","to":"s1","label":"...","note":"...","time":3,"money":1,"effort":4,"risk":2,"duration":"2–3 weeks","steps":["...","..."]}]}
 JSON Schema: ${JSON.stringify(RESULT_SCHEMA)}`;
 
+// No key baked into the bundle: with no personal key the request goes through
+// this project's server, which reads GROQ_API_KEY from its own .env.
+
 export default {
   id: 'groq',
   name: 'Groq',
   async generate(req, p) {
-    if (!p.apiKey) throw new Error('No Groq API key (Settings → Dreamer)');
-    const model = p.model || 'openai/gpt-oss-20b';
+    const apiKey = p.apiKey || '';
+    const model = p.model || 'openai/gpt-oss-120b';
+    const endpoint = apiKey ? 'https://api.groq.com/openai/v1/chat/completions' : '/api/llm/groq';
     // Free tier is rate-limited per minute: wait as long as Groq asks, a few times.
     for (let attempt = 0; ; attempt++) {
       let res;
       try {
-        res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${p.apiKey}` },
+          headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
           body: JSON.stringify({
             model,
             temperature: 0.6,

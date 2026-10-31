@@ -16,9 +16,12 @@ const TEMPLATES = [
       ['r6', 'Visa / residence permit approved', ''],
       ['r7', 'Move fund saved (flights + 3–6 months of costs)', ''],
       ['r8', 'First month of housing arranged', ''],
+      ['r9', 'Internal transfer to a role abroad', 'Stay with your current employer and move through an intra-company transfer.'],
     ],
     actions: [
       ['START', 'r1', 'Compare countries: visa routes, cost of living, language, jobs', 2, 0, 3, 1],
+      ['START', 'r9', 'Ask your employer about an internal transfer or overseas office', 3, 0, 4, 4],
+      ['r9', 'r6', 'Let the company sponsor the transfer paperwork', 4, 2, 3, 4],
       ['r1', 'r2', 'Apply to visa-sponsoring jobs (LinkedIn, Relocate.me, company sites)', 6, 1, 7, 6],
       ['r1', 'r3', 'Apply to universities or language schools; line up funding', 6, 7, 6, 4],
       ['r1', 'r4', 'Build remote income: freelance clients or a remote job', 7, 1, 7, 5],
@@ -36,7 +39,7 @@ const TEMPLATES = [
     match: /\b(app|apps|app store|play store|startup|saas|launch|product|game|users|downloads|make it big|indie)\b/i,
     states: [
       ['a1', 'Problem validated with 10+ target users', 'They describe the pain unprompted and have tried to solve it.'],
-      ['a2', 'Underserved niche spotted in store charts', 'Popular apps with lots of 1–3★ reviews complaining about the same thing.'],
+      ['a2', 'Underserved niche spotted in store charts', 'Popular apps with lots of 1-3 star reviews complaining about the same thing.'],
       ['a3', 'Clickable prototype tested with 5 users', ''],
       ['a4', 'MVP in beta (TestFlight / Play testing)', 'Smallest version that delivers the core value.'],
       ['a5', 'Live on the store with a strong listing', 'Good icon, screenshots, keywords, first reviews.'],
@@ -69,9 +72,12 @@ const TEMPLATES = [
       ['m3', 'High-interest debt paid off', ''],
       ['m4', 'Income raised (raise, new job or side income)', ''],
       ['m5', 'Investing automatically every month', ''],
+      ['m6', 'One-off boost banked (bonus, sale, windfall)', 'A lump sum accelerates the plan without changing daily spending.'],
     ],
     actions: [
       ['START', 'm1', 'Track every expense for 30 days; build a budget', 2, 0, 3, 0],
+      ['m1', 'm6', 'Find a one-off boost: sell unused things, claim a bonus, take a small contract', 3, 0, 4, 3],
+      ['m6', 'm5', 'Bank the lump sum and invest it instead of spending it', 1, 0, 2, 2],
       ['m1', 'm2', 'Cut 2–3 big expenses; automate savings transfers', 5, 0, 4, 1],
       ['m2', 'm3', 'Avalanche method: pay highest-interest debt first', 6, 0, 4, 1],
       ['m2', 'm4', 'Negotiate a raise, switch jobs, or start a side gig', 5, 0, 6, 4],
@@ -89,9 +95,12 @@ const TEMPLATES = [
       ['f3', 'Nutrition & sleep dialed in', ''],
       ['f4', 'Coach, program or training partner in place', ''],
       ['f5', 'First milestone hit', ''],
+      ['f6', 'Group classes or a sport running alongside training', 'Social training keeps adherence high when motivation dips.'],
     ],
     actions: [
       ['START', 'f1', 'Measure weight / times / lifts; check in with a doctor', 1, 1, 2, 1],
+      ['f1', 'f6', 'Join a class, club or team so someone expects you', 2, 3, 4, 2],
+      ['f6', 'f3', 'Use the group sessions as your main conditioning block', 5, 2, 5, 2],
       ['f1', 'f2', 'Pick a simple program; schedule sessions like meetings', 4, 1, 6, 2],
       ['f1', 'f4', 'Join a club, hire a coach, or find a partner', 2, 5, 3, 1],
       ['f4', 'f2', 'Show up to every scheduled session', 4, 1, 5, 1],
@@ -110,9 +119,12 @@ const TEMPLATES = [
       ['c4', 'Warm intros / referrals lined up', ''],
       ['c5', 'Interviews in progress', ''],
       ['c6', 'Offer in hand', ''],
+      ['c7', 'Internal promotion or transfer lined up', 'A different route to the same title without an external job search.'],
     ],
     actions: [
       ['START', 'c1', 'Read 20 job posts; list required skills & salary range', 1, 0, 2, 0],
+      ['START', 'c7', 'Tell your manager and skip-level what role you want next', 2, 0, 4, 3],
+      ['c7', 'c6', 'Turn the internal move into a written offer', 3, 0, 4, 3],
       ['c1', 'c2', 'Close the gaps with one focused project', 6, 2, 6, 2],
       ['c1', 'c3', 'Rewrite your resume around results; add portfolio pieces', 2, 0, 4, 1],
       ['c2', 'c3', 'Turn the project into a portfolio piece; update resume', 2, 0, 3, 1],
@@ -133,9 +145,12 @@ const TEMPLATES = [
       ['l4', 'First real project / conversation completed', ''],
       ['l5', 'Feedback from an expert or community', ''],
       ['l6', 'Credential or portfolio proving the skill', ''],
+      ['l7', 'Immersion route: tutor, cohort or exchange', 'Learn with people instead of alone when self-study keeps stalling.'],
     ],
     actions: [
       ['START', 'l1', 'Define what "done" looks like (exam, project, fluency test)', 1, 0, 2, 0],
+      ['l1', 'l7', 'Book a tutor, cohort course or language exchange', 2, 4, 3, 2],
+      ['l7', 'l4', 'Use the sessions on something real with feedback', 3, 3, 4, 2],
       ['l1', 'l2', 'Pick one course or book; ignore the rest', 1, 2, 2, 1],
       ['l2', 'l3', 'Schedule daily practice; keep a streak', 4, 0, 5, 2],
       ['l3', 'l4', 'Use the skill on something real', 4, 1, 6, 3],
@@ -148,22 +163,28 @@ const TEMPLATES = [
     id: 'generic',
     match: /.*/,
     states: [
-      ['g1', 'Finish line defined & measurable', 'What exactly is true on the day you\'ve made it?'],
-      ['g2', 'Gaps mapped: skills, money, people, time', ''],
-      ['g3', 'Advice from someone who already did it', ''],
-      ['g4', 'First small milestone achieved', ''],
-      ['g5', 'Weekly routine & feedback loop running', ''],
-      ['g6', 'Biggest obstacle removed', ''],
+      ['g1', '"{goalS}" defined in numbers and a date', 'What exactly is true on the day you\'ve made it?'],
+      ['g2', 'Gaps between now and "{goalS}" mapped', ''],
+      ['g3', 'Advice from someone who reached "{goalS}"', ''],
+      ['g4', 'First real milestone toward "{goalS}" achieved', ''],
+      ['g5', 'Weekly routine toward "{goalS}" running', ''],
+      ['g6', 'Biggest obstacle to "{goalS}" removed', ''],
+      ['g7', 'Second opinion on the "{goalS}" route', 'A different perspective on the route you picked.'],
+      ['g8', 'Cheaper or faster route to "{goalS}" tested', 'A parallel approach priced out against the main one.'],
     ],
     actions: [
       ['START', 'g1', 'Write what "{goal}" means in numbers and a date', 1, 0, 2, 0],
       ['g1', 'g2', 'List what you lack; estimate cost & time for each', 1, 0, 3, 1],
       ['g2', 'g3', 'Find and ask 3 people who achieved it', 2, 0, 4, 2],
+      ['g2', 'g7', 'Ask two people who took a different route what they would change', 2, 0, 3, 2],
       ['g2', 'g4', 'Do the smallest real step toward it this week', 2, 1, 4, 2],
+      ['g2', 'g8', 'Price out a cheaper or faster way to get the same outcome', 2, 2, 3, 2],
       ['g3', 'g4', 'Apply their advice to a first small step', 2, 1, 4, 2],
+      ['g7', 'g4', 'Apply the most useful piece of their advice this week', 2, 1, 3, 2],
       ['g4', 'g5', 'Block weekly time; review progress every Sunday', 4, 0, 5, 2],
+      ['g8', 'g5', 'Switch to the alternative if the numbers are better', 3, 2, 4, 3],
       ['g5', 'g6', 'Tackle the hardest blocker head-on', 5, 3, 7, 5],
-      ['g6', 'GOAL', 'Keep compounding until you cross the finish line', 7, 3, 6, 4],
+      ['g6', 'GOAL', 'Keep compounding until "{goal}" is true', 7, 3, 6, 4],
     ],
   },
 ];
@@ -182,7 +203,8 @@ function checklist(label, to, n = 4) {
   ];
   return n >= 5 ? all : all.filter((_, i) => i !== 3).slice(0, n);
 }
-const fill = (s, goal) => s.replaceAll('{goal}', goal);
+const shortGoal = (goal) => (goal.length > 38 ? goal.slice(0, 37).trimEnd() + '…' : goal);
+const fill = (s, goal) => s.replaceAll('{goal}', goal).replaceAll('{goalS}', shortGoal(goal));
 
 function pickTemplate(req) {
   const text = `${req.goal.label} ${req.goal.note || ''}`;
@@ -213,13 +235,38 @@ function toAction(a, goal, from = a[0], detail = 'normal', label = (k) => k) {
 
 const labeller = (t, goal) => (k) => (k === 'GOAL' ? goal : fill(t.states.find((s) => s[0] === k)?.[1] || 'the next state', goal));
 
+// Cheapest START -> GOAL chain through the template (used by `routes: one`).
+function bestChain(actions) {
+  let best = null;
+  const walk = (key, path, cost, seen) => {
+    if (key === 'GOAL') {
+      if (!best || cost < best.cost) best = { path: [...path], cost };
+      return;
+    }
+    for (const a of actions) {
+      if (a[0] !== key || seen.has(a[1])) continue;
+      walk(a[1], [...path, a], cost + avg(a), new Set([...seen, a[1]]));
+    }
+  };
+  walk('START', [], 0, new Set(['START']));
+  return best?.path || actions;
+}
+
 function dream(req) {
   const t = pickTemplate(req);
   const h = remaining(t);
   const goal = req.goal.label;
+  const routes = req.params?.routes || 'some';
+
+  // `Routes: One` keeps a single chain; the other modes keep every branch, so
+  // the map has real alternatives for A* to compare.
+  const actions = routes === 'one' ? bestChain(t.actions) : t.actions;
+  const keys = new Set(actions.flatMap((a) => [a[0], a[1]]).filter((k) => k !== 'START' && k !== 'GOAL'));
+  const states = t.states.filter(([key]) => keys.has(key));
+
   return {
-    states: t.states.map(([key, label, note]) => ({ key, label: fill(label, goal), note, h: Math.round((h[key] ?? 10) * 10) / 10 })),
-    actions: t.actions.map((a) => toAction(a, goal, a[0], req.params?.detail, labeller(t, goal))),
+    states: states.map(([key, label, note]) => ({ key, label: fill(label, goal), note, h: Math.round((h[key] ?? 10) * 10) / 10 })),
+    actions: actions.map((a) => toAction(a, goal, a[0], req.params?.detail, labeller(t, goal))),
   };
 }
 
@@ -232,17 +279,37 @@ function expand(req) {
   const tKey = isStart ? 'START' : t.states.find((s) => normLabel(fill(s[1], goal)) === normLabel(node.label))?.[0];
 
   if (tKey) {
-    const next = t.actions.filter((a) => a[0] === tKey);
+    let next = t.actions.filter((a) => a[0] === tKey);
+    if (req.params?.routes === 'one' && next.length > 1 && req.params?.detail !== 'detailed' && req.params?.detail !== 'deep') {
+      next = [next.reduce((best, a) => (avg(a) < avg(best) ? a : best), next[0])];
+    }
     if (next.length) {
       const keys = new Set(next.map((a) => a[1]));
+      // Downstream continuation: gather actions leaving target keys towards next milestones or GOAL
+      // so newly created states are not dead-end leaf nodes.
+      const downstreamActions = [];
+      const downstreamKeys = new Set();
+      for (const k of keys) {
+        if (k === 'GOAL') continue;
+        const outs = t.actions.filter((a) => a[0] === k);
+        for (const outA of outs) {
+          downstreamActions.push(outA);
+          if (outA[1] !== 'GOAL' && outA[1] !== 'START') downstreamKeys.add(outA[1]);
+        }
+      }
+      const allKeys = new Set([...keys, ...downstreamKeys]);
+      const combinedActions = [
+        ...next.map((a) => toAction(a, goal, 'HERE', req.params?.detail, labeller(t, goal))),
+        ...downstreamActions.map((a) => toAction(a, goal, a[0], req.params?.detail, labeller(t, goal)))
+      ];
       return {
-        states: t.states.filter((s) => keys.has(s[0])).map(([key, label, note]) => ({ key, label: fill(label, goal), note, h: h[key] ?? 10 })),
-        actions: next.map((a) => toAction(a, goal, 'HERE', req.params?.detail, labeller(t, goal))),
+        states: t.states.filter((s) => allKeys.has(s[0])).map(([key, label, note]) => ({ key, label: fill(label, goal), note, h: h[key] ?? 10 })),
+        actions: combinedActions,
       };
     }
   }
 
-  // No template knowledge: offer three generic moves, plus a final push once we're past the start.
+  // No template knowledge: offer three generic moves, plus connections to GOAL so they aren't leaves
   const g = goal.length > 40 ? goal.slice(0, 39) + '…' : goal;
   const base = Math.max(4, (node.h ?? 12) - 3);
   const out = {
@@ -255,6 +322,9 @@ function expand(req) {
       { from: 'HERE', to: 'x1', label: 'Research the requirements for the next step', note: '', time: 2, money: 0, effort: 3, risk: 1 },
       { from: 'HERE', to: 'x2', label: 'Run the smallest experiment you can this week', note: '', time: 2, money: 1, effort: 4, risk: 3 },
       { from: 'HERE', to: 'x3', label: 'Ask three people who have done it', note: '', time: 2, money: 0, effort: 4, risk: 3 },
+      { from: 'x1', to: 'GOAL', label: `Apply insights to reach "${g}"`, note: '', time: 4, money: 2, effort: 4, risk: 2 },
+      { from: 'x2', to: 'GOAL', label: `Scale validated test to "${g}"`, note: '', time: 4, money: 2, effort: 5, risk: 3 },
+      { from: 'x3', to: 'GOAL', label: `Execute advised roadmap to "${g}"`, note: '', time: 3, money: 1, effort: 4, risk: 2 },
     ],
   };
   for (const a of out.actions) Object.assign(a, { duration: '', steps: [] });

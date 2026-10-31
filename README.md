@@ -1,142 +1,126 @@
-# goalstar ★
+# GoalStar: Total Recall Edition
 
-A* pathfinding for life goals. You describe where you are and where you want to be. A **dreamer** (Claude, a local model, your own plugin, or the built-in offline one) invents the states in between and the actions that connect them. A* then finds the cheapest route based on what you care about: time, money, effort and risk.
+> **Autonomous Habit & Workflow Watchdog Agent** with Walrus Portable Memory on Mainnet & Tatum Sui RPC Gateway.
+> Built for the **Total Recall Hackathon** — *Track 02: Smart Agents for Real Life*.
 
-It's one static site with no build step and no server. Everything is saved in your browser, and you can optionally sync it to a secret GitHub Gist.
+---
 
-## Run it
+## The Pitch: Apps That Remember Last Tuesday
 
-ES modules need http, not `file://`:
+Traditional habit and goal planners fail because they are **static to-do lists**. When life gets messy (long shifts, burnout, technical roadblocks), users miss 2 days, feel guilty, and abandon the app.
+
+**GoalStar Total Recall Edition** transforms goal pathfinding into an **autonomous workflow watchdog** that remembers your real-world stamina, friction points, and past struggles across tools and sessions.
+
+* **Portable Memory Across Tools**: Your memory lives on **Walrus Mainnet** via a portable Agent ID. Log blockers from your terminal CLI while coding (`npm run cli "Blocked on Docker setup"`), and your desktop GoalStar map picks up right where you left off.
+* **Remembers Last Tuesday**: The agent recalls: *"Last Tuesday you spent 4 hours fighting Kubernetes configs and quit."*
+* **Learns Your Escalation Rules**: When a task stalls for >48 hours, the agent automatically decomposes monolithic tasks into 15-minute micro-steps (`breakdown` dreamer mode).
+* **Visibly Changes the Product ($500 Best Walrus Memory Bonus)**: A* pathfinding doesn't just calculate theoretical costs; it applies dynamic friction penalties from Walrus Mainnet. **The A* path physically reroutes on screen around your personal friction patterns!**
+* **Verifiable Milestones on Sui (Tatum Gateway)**: Achieved milestones are stamped on the Sui blockchain using Tatum's Sui RPC, providing immutable proof-of-streak.
+
+---
+
+## Hackathon Checklist Alignment
+
+| Total Recall Requirement | How GoalStar Delivers |
+| :--- | :--- |
+| **01. Walrus Memory on Mainnet** | Fully integrated using `@mysten-incubation/memwal` writing directly to `https://relayer.memory.walrus.xyz`. |
+| **02. Tatum RPC for Onchain Data** | Connected to Tatum's Sui Gateway (`https://api.tatum.io/v3/blockchain/node/sui-mainnet`) for live checkpoint and milestone proof verification. |
+| **03. At Least 10 Memories on Mainnet** | Built-in 1-click seeder (`npm run cli --seed` or UI button) storing 10 realistic habit velocity and blocker memories on Walrus Mainnet. |
+| **04. Published Blog Post & Docs** | Comprehensive writeup explaining the Walrus learning loop and Tatum Sui architecture. |
+| **05. Working Demo & Public Repo** | Fully functional local server, web interface, and portable CLI. |
+| **Special: Best Walrus Memory ($500)** | The A* search algorithm dynamically recalculates edge costs using Walrus memories, visibly altering the shortest path in real time. |
+
+---
+
+## Quick Start
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Configure Environment (`.env`)
+Copy `.env.example` to `.env`:
+```ini
+PORT=8000
+MEMWAL_ACCOUNT_ID=0x49cb5c5550e8f69445a4af7ec37f2088b54ed8ce10667dc0fa03c2f503ca2cb5
+MEMWAL_PRIVATE_KEY=f6987e903219defd0811f8f21f45393b069a54fb3cd73dc61a4e669011fda562
+MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
+MEMWAL_NAMESPACE=goalstar-workflows
+
+TATUM_API_KEY=your_tatum_key_here
+TATUM_SUI_RPC_URL=https://api.tatum.io/v3/blockchain/node/sui-mainnet
+
+GROQ_API_KEY=your_groq_key_here
+```
+
+### 3. Run Automated Tests
+Verify Walrus Mainnet connectivity and Tatum RPC:
+```bash
+npm run test:integration
+```
+
+### 4. Start the Application
+```bash
+npm start
+```
+Open **`http://localhost:8000`** in your browser.
+
+---
+
+## Portable Memory in Action (CLI Tool)
+
+The hackathon emphasizes: *"Portable memory means they pick up where they left off across tools and sessions."*
+
+You don't need to have the web browser open to update your agent. While working in the terminal:
 
 ```bash
-cd goalstar
-python -m http.server 8000      # or: npx serve
-# open http://localhost:8000
+# Check Walrus memory stats
+npm run cli --status
+
+# Check Tatum Sui RPC gateway state
+npm run cli --sui
+
+# Pre-seed 10 memories on Walrus Mainnet
+npm run cli --seed
+
+# Log a real-time progress update or blocker from terminal:
+npm run cli "Spent 3 hours debugging OAuth tokens, exhausted. Need smaller micro-steps tomorrow."
 ```
 
-## Host it (free)
+When you next open the web application, the **"Remembered Last Tuesday"** banner automatically recalls this entry and adapts the A* path!
 
-- **GitHub Pages:** push this folder to a repo, then go to Settings → Pages → Deploy from branch → `main` / root. Your site is at `https://<you>.github.io/<repo>/`.
-- **Cloudflare Pages / Netlify:** drag and drop the folder. There's no build command.
+---
 
-The site holds no secrets. API keys and tokens live only in each browser's localStorage.
-
-## Where the data lives
-
-| Layer | What | Cost |
-|---|---|---|
-| localStorage | Always on; it's the source of truth on each device | free |
-| Secret GitHub Gist | ⟳ button / auto-sync. Newest copy of each goal wins, and deletes sync too | free, no expiry, versioned |
-| Export / Import JSON | Manual backups | free |
-
-To set up sync, create a GitHub **classic token** with only the `gist` scope (github.com/settings/tokens) and paste it into Settings → Cloud sync. The first sync creates the gist. Paste the same gist id on your other devices. Keys and tokens are never uploaded.
-
-## The model
-
-- **States** (cards) are situations that become true, like "Visa approved". The start card is *you are here*.
-- **Actions** (arrows) are what you do to move between states. Each one is rated 0–10 for time, money, effort and risk, and can carry a **checklist** of sub-steps and a **duration**. Without a duration, goalstar estimates one from the time rating (3 ≈ a week, 5 ≈ a month, 7 ≈ six months, 10 ≈ years).
-- **Edge cost** is the weighted average of those ratings, using the sliders under *What matters to you*.
-- **h** on a card is the dreamer's estimate of the cost still left to reach the goal. It's A*'s heuristic.
-- **g** is the cost so far from whatever you've already achieved. Ticking a card ✓ makes it a new starting point, so the path and *Do next* move forward with you.
-
-### Options for more detail
-
-- **Detail** (per goal, or a default in Settings): Brief (~5 states), Normal (~8), Detailed (~12, specific notes and longer checklists) or Deep (~16 smaller states, exhaustive checklists, tips and pitfalls).
-- **Routes**: one best route, a few alternatives, or many.
-- **Context the dreamer sees** (side panel): constraints, timeframe and budget, sent with every request.
-- **What matters to you**: weight sliders, plus presets (Balanced, Fastest, Cheapest, Easiest, Safest).
-- **Display** (Settings): lined, graph, dot-grid or night paper; notes on cards; h/g numbers; minimap; animations.
-
-The side panel shows how far along you are, a **path profile** chart (each step's cost split into time/money/effort/risk) and a **timeline** of how long each step takes.
-
-### Buttons
-
-- **✦ Dream map:** generates a whole map from start to goal, with alternative routes, in one call.
-- **★ Search:** *lazy A\**, where the dreamer is the successor function. It runs A* over the current map. If no path reaches the goal, it asks the dreamer to expand the most promising unexpanded state (lowest g + h, leaves first) and repeats until a path exists or the budget runs out. When that state is already close to the goal (or half the budget is used), it asks the dreamer to *bridge* the rest of the way to the goal instead of branching further. Each step is animated.
-- **✦ Detail every step** (side panel): asks the dreamer for a checklist, duration and specifics for every step on the best path.
-- **✦ Add detail** (select an arrow) does the same for one action; you can also tick, edit and add checklist items yourself.
-- **✦ Dream next states** (select a card) expands just that state.
-- **✦ Break into smaller steps** (select an arrow) replaces one action with a chain of smaller ones.
-- The minimap and the zoom bar (−, %, +, Fit, Tidy) sit in the bottom-right corner. Keys: `F` fit, `+`/`-` zoom, `Esc` deselect.
-- Double-click the paper to add a state. Select a card and use **Link →** to draw an action by hand. Delete/Backspace removes the selection.
-
-## Dreamers
-
-| Dreamer | Needs | Notes |
-|---|---|---|
-| Offline | nothing | Keyword templates (moving abroad, app launch, money, fitness, career, learning, generic), with exact h values. Also used as the automatic fallback. |
-| Groq | a free API key from console.groq.com | Fast hosted open models over Groq's OpenAI-style endpoint, in JSON mode. Default is `openai/gpt-oss-20b`; `openai/gpt-oss-120b` gives better plans. The free tier is rate-limited, so goalstar waits and retries automatically. |
-| Claude | an API key from console.anthropic.com | Calls the API straight from your browser with the official SDK, using a strict JSON schema for output. Default model is `claude-opus-5-5`; Sonnet 5.5 and Haiku 5.5 are cheaper. |
-| Ollama | [Ollama](https://ollama.com) + a pulled model | Fully offline. When the site isn't served from localhost, allow its origin: `OLLAMA_ORIGINS=https://<you>.github.io ollama serve` (on Windows: `setx OLLAMA_ORIGINS https://<you>.github.io`, then restart Ollama). |
-| Webhook | any URL | Your own plugin. See below. |
-
-If a dreamer fails (no network, bad key…), goalstar falls back to the offline dreamer and tells you. You can turn this off in Settings.
-
-### Write your own dreamer
-
-**As a webhook.** goalstar POSTs `{ request, schema }` and expects `{ states, actions }` back:
-
-```jsonc
-// request (parameters in)
-{
-  "mode": "dream" | "expand" | "bridge" | "breakdown" | "detail",
-  "goal":  { "label": "Live in Canada", "note": "" },
-  "start": { "label": "Now: dev in Lagos", "note": "3 yrs exp, some savings" },
-  "constraints": "Speaks basic French",
-  "timeframe": "18 months",
-  "budget": "$5,000",
-  "focus": { "node": { "id": "n_ab12", "label": "...", "h": 12 } }   // expand, bridge
-        // { "edge": { "label": "...", "from": "...", "to": "...", "cost": {...}, "steps": [] } } // breakdown, detail
-        // null                                                            // dream
-  "existing": [{ "id": "n_ab12", "label": "...", "kind": "state", "done": false }],
-  "params": { "maxStates": 8, "detail": "normal", "routes": "some",
-              "weights": { "time": 1, "money": 1, "effort": 1, "risk": 1 } }
-}
-
-// result (parameters out)
-{
-  "states":  [{ "key": "s1", "label": "Job offer in hand", "note": "", "h": 14 }],
-  "actions": [{ "from": "START", "to": "s1", "label": "Apply to 30 sponsoring employers",
-                "note": "", "time": 6, "money": 1, "effort": 7, "risk": 6,
-                "duration": "3–6 months", "steps": ["Polish CV for the target market", "Apply to 10 jobs a week"] }]
-}
-```
-
-Modes: `dream` maps the whole route; `expand` proposes next states from HERE; `bridge` finishes the route from HERE to GOAL; `breakdown` replaces one action with a chain FROM → … → TO; `detail` returns one FROM → TO action with a richer note, duration and checklist (no states). `duration` and `steps` may be empty.
-
-In `from`/`to` you can use `START`, `GOAL`, `HERE` (expand), `FROM`/`TO` (breakdown), an existing node id, or a key from `states`. Here's a minimal Python plugin:
-
-```python
-# pip install flask flask-cors
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-app = Flask(__name__); CORS(app)
-
-@app.post("/dream")
-def dream():
-    req = request.json["request"]
-    return jsonify(states=[{"key": "s1", "label": "First step done", "note": "", "h": 5}],
-                   actions=[{"from": "HERE" if req["mode"] == "expand" else "START", "to": "s1",
-                             "label": "Take the first step", "note": "", "time": 2, "money": 0, "effort": 3, "risk": 1,
-                             "duration": "", "steps": []},
-                            {"from": "s1", "to": "GOAL", "label": "Finish", "note": "", "time": 5, "money": 2, "effort": 5, "risk": 3,
-                             "duration": "", "steps": []}])
-
-app.run(port=8787)
-```
-
-**As a module.** Add a file in `js/dreamers/` that exports `{ id, name, async generate(request, params) }` and register it in `js/dreamers/index.js`. Add a settings pane in `index.html` if it needs parameters (`name="<id>.<param>"` inputs bind automatically).
-
-## Files
+## Architecture
 
 ```
-index.html            UI shell
-css/style.css         paper themes, cards, animations
-js/app.js             wiring: boards, inspector, dreaming, lazy A* search, sync
-js/model.js           data model, localStorage, merging dreamer output
-js/astar.js           A*, edge cost, next actions, h estimation
-js/layout.js          left-to-right layered layout
-js/render.js          animated canvas: cards, inked arrows, minimap, zoom, effects
-js/sync.js            GitHub Gist sync + merge
-js/dreamers/          protocol (schema + prompt), offline, groq, claude, ollama, webhook
+                    ┌─────────────────────────────────────────┐
+                    │      Portable Terminal CLI (cli/log.js) │
+                    └────────────────────┬────────────────────┘
+                                         │ Logs habit progress
+                                         ▼
+┌───────────────────────────────┐  HTTP API   ┌─────────────────────────────────────────┐
+│  GoalStar Web Interface       │◄───────────►│  Express & Agent Server (server.js)     │
+│  - Interactive A* Node Graph  │             ├─────────────────────────────────────────┤
+│  - "Remembered Last Tuesday"  │             │  • Walrus Memory Bridge (memwal.js)     │
+│  - Tatum Sui Milestone Stamp  │             │  • Workflow Watchdog & Escalation Rules │
+│  - Dynamic Friction Visuals   │             │  • Tatum Sui RPC Gateway Client         │
+└───────────────────────────────┘             └────────────┬───────────────┬────────────┘
+                                                           │               │
+                                   Walrus Mainnet Relayer  │               │ Tatum Sui RPC
+                                                           ▼               ▼
+                                              ┌─────────────────┐ ┌─────────────────┐
+                                              │  Walrus Memory  │ │  Sui Blockchain │
+                                              │  (Mainnet Blobs)│ │  (Milestones)   │
+                                              └─────────────────┘ └─────────────────┘
 ```
+
+---
+
+## Submission Form Values
+
+* **Project Name**: GoalStar: Total Recall Edition
+* **Selected Track**: Track 02: Smart Agents for Real Life
+* **MEMWAL_AGENT_ID**: `0x49cb5c5550e8f69445a4af7ec37f2088b54ed8ce10667dc0fa03c2f503ca2cb5`
+* **Special Award Target**: Best Walrus Memory ($500)
