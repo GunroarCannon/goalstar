@@ -353,18 +353,8 @@
               <option value="terminal">Terminal (phosphor)</option>
             </select>
           </label>
-                    <label>Map Font
-            <select name="display.font" id="settingsMapFont" title="Font used for milestones and action labels on the canvas">
-              <option value="hand" style="font-family:'Patrick Hand', cursive; font-size:16px;">Handwritten (Patrick Hand)</option>
-              <option value="sans" style="font-family:'Space Grotesk', sans-serif; font-size:14px;">Clean Sans-Serif (Space Grotesk)</option>
-              <option value="marker" style="font-family:'Caveat', cursive; font-size:17px; font-weight:700;">Marker (Caveat)</option>
-              <option value="mono" style="font-family:'Courier Prime', monospace; font-size:13.5px;">Technical Monospace (Courier Prime)</option>
-              <option value="serif" style="font-family:'Playfair Display', Georgia, serif; font-size:14px;">Editorial Serif (Playfair Display)</option>
-              <option value="typewriter" style="font-family:'Special Elite', monospace; font-size:13px;">Vintage Typewriter (Special Elite)</option>
-              <option value="system" style="font-family:system-ui, -apple-system, sans-serif; font-size:14px;">System Default</option>
-            </select>
-          </label>
-          <div class="font-pill-gallery" id="fontPillGallery" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:-4px; margin-bottom:12px;">
+          <div class="map-font-label">Map Font</div>
+          <div class="font-pill-gallery" id="fontPillGallery" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; margin-bottom:12px;">
             <button type="button" class="font-pill-btn" data-font="hand" style="font-family:'Patrick Hand', cursive; font-size:15px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Handwritten</button>
             <button type="button" class="font-pill-btn" data-font="sans" style="font-family:'Space Grotesk', sans-serif; font-size:12.5px; font-weight:600; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Clean Sans</button>
             <button type="button" class="font-pill-btn" data-font="marker" style="font-family:'Caveat', cursive; font-size:15px; font-weight:700; padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--field); color:var(--ink); cursor:pointer;">Marker</button>
@@ -378,7 +368,7 @@
             <label class="row"><input type="checkbox" name="display.numbers"> h / g numbers</label>
             <label class="row"><input type="checkbox" name="display.minimap"> Minimap</label>
             <label class="row"><input type="checkbox" name="display.motion"> Animations</label>
-            <label class="row"><input type="checkbox" name="display.arrowGlow"> Arrow glow (neon highlights on paths &amp; arrows)</label>
+            <label class="row"><input type="checkbox" name="display.arrowGlow"> Path glow</label>
           </div>
         </div>
       </fieldset>

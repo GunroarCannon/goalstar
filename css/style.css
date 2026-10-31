@@ -603,7 +603,7 @@ body[data-paper='simple-light'] .canvas::before { display: none; }
 svg.edges { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; }
 .edge { fill: none; stroke: var(--ink-soft); stroke-width: 1.7; opacity: 0.62; stroke-linecap: round; transition: opacity 0.2s, stroke 0.2s; }
 
-/* Arrow & Route Glow (controlled via Settings -> Display -> Arrow Glow) */
+/* Path Glow (controlled via Settings -> Display -> Path glow) */
 body.arrow-glow .edge.hot {
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--gold) 55%, transparent)) !important;
 }
@@ -613,6 +613,10 @@ body.arrow-glow .flow {
 body:not(.arrow-glow) .edge.hot,
 body:not(.arrow-glow) .flow {
   filter: none !important;
+}
+/* Hide hl halo path when glow is off */
+body:not(.arrow-glow) .hl {
+  stroke: none !important;
 }
 
 .edge.hot { stroke: var(--gold-ink); stroke-width: 2.4; opacity: 1; }
@@ -935,6 +939,14 @@ dialog legend { font-weight: 700; padding: 0 6px; }
 .sync-row { justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; }
 
 /* Font Pill Picker in Settings */
+.map-font-label {
+  font: 600 11px/1 var(--ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
 .font-pill-gallery {
   display: flex;
   flex-wrap: wrap;
@@ -2573,6 +2585,11 @@ html[data-theme-preset='terminal'] body {
   border-color: var(--gold) !important;
   box-shadow:
     0 0 0 3px var(--gold),
+    2px 3px 0 var(--shadow) !important;
+}
+body.arrow-glow .node.hot {
+  box-shadow:
+    0 0 0 3px var(--gold),
     0 0 0 7px var(--hl),
     2px 3px 0 var(--shadow),
     0 0 22px color-mix(in srgb, var(--gold) 35%, transparent) !important;
@@ -2604,9 +2621,11 @@ html[data-theme-preset='terminal'] body {
 }
 .elabel.hot {
   border-color: var(--gold);
+}
+body.arrow-glow .elabel.hot {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 30%, transparent), 2px 2px 0 var(--shadow);
 }
-.hl { stroke: color-mix(in srgb, var(--gold) 22%, transparent); }
+body.arrow-glow .hl { stroke: color-mix(in srgb, var(--gold) 22%, transparent); }
 .flow { fill: var(--gold); stroke: var(--ink); stroke-width: 1.4; r: 5; }
 
 /* =========================================================

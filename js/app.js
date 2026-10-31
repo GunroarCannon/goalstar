@@ -1627,15 +1627,9 @@ const setPath = (obj, path, v) => {
   target[last] = v;
 };
 
-// Synchronize font pills and select styling
+// Synchronize font pills UI
 function syncFontPickerUI() {
-  const fontSelect = $('#settingsMapFont');
-  if (!fontSelect) return;
-  const currentVal = fontSelect.value || getPath(settings(), 'display.font') || 'hand';
-  fontSelect.value = currentVal;
-
-  const fontDef = FONT_MAP[currentVal] || FONT_MAP.hand;
-  fontSelect.style.fontFamily = fontDef;
+  const currentVal = getPath(settings(), 'display.font') || 'hand';
 
   document.querySelectorAll('.font-pill-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.font === currentVal);
@@ -1690,22 +1684,13 @@ $('#settingsTheme')?.addEventListener('change', (e) => {
   theme.setPreset(e.target.value);
 });
 
-$('#settingsMapFont')?.addEventListener('change', (e) => {
-  syncFontPickerUI();
-  const fontVal = e.target.value;
-  setPath(settings(), 'display.font', fontVal);
-  applyDisplay();
-  refresh();
-});
-
 document.querySelectorAll('.font-pill-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     sound.play('click');
     const fVal = btn.dataset.font;
-    const fontSelect = $('#settingsMapFont');
-    if (fontSelect) fontSelect.value = fVal;
     syncFontPickerUI();
     setPath(settings(), 'display.font', fVal);
+    persist({ touch: false });
     applyDisplay();
     refresh();
   });
