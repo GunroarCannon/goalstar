@@ -664,8 +664,8 @@
       const settingsBtn = document.getElementById('settingsBtn');
       if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
     }
-      if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
-    }
+    else if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
+    
 
     // ─── 3D Toggle visual state sync ─────────────────────────────────────
     // theme.js and sound.js already manage the `.active` class via their own

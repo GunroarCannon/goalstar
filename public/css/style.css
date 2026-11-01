@@ -369,7 +369,7 @@ input[type='range']::-webkit-slider-thumb {
 
 /* ---------- logo ---------- */
 .brand { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); text-decoration: none; margin-right: 4px; }
-.brand .word { font-family: var(--title); font-size: 31px; font-weight: 700; line-height: 1; letter-spacing: 0.01em; }
+.brand .word { font-family: var(--title); font-size: 24px; font-weight: 700; line-height: 1; letter-spacing: 0.01em; }
 .brand .word b { color: var(--gold-ink); font-weight: 700; }
 .logo { width: 34px; height: 34px; overflow: visible; }
 .logo .trail { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 0.1 4.4; }
