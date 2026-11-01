@@ -4899,7 +4899,7 @@ console.log({triggerStart, p, "rectTop":rectTop, triggerEnd});
           if (cls) cls.style.transform = `translate3d(-${(p * partDist * 0.85).toFixed(1)}px, ${(p * 35).toFixed(1)}px, 0) scale(${1 + p * 0.1}) rotate(-${(p * 9).toFixed(1)}deg)`;
           if (crp) crp.style.transform = `translate3d(${(p * partDist * 1.1).toFixed(1)}px, -${(p * 40).toFixed(1)}px, 0) scaleX(-1) scale(${1 + p * 0.15}) rotate(${(p * 14).toFixed(1)}deg)`;
           if (crs) crs.style.transform = `translate3d(${(p * partDist * 0.85).toFixed(1)}px, ${(p * 45).toFixed(1)}px, 0) scaleX(-1) scale(${1 + p * 0.1}) rotate(${(p * 9).toFixed(1)}deg)`;
-          if (ccp) ccp.style.transform = `translate(-50%, -50%) scale(${(1 - p * 0.7).toFixed(2)})`;
+          if (ccp) ccp.style.transform = `translate(-50%, -50%) translate3d(-${(p * partDist * 2.1).toFixed(1)}px, -${(p * 45).toFixed(1)}px, 0) scale(${(1 - p * 0.7).toFixed(2)})`;
           if (mist) mist.style.opacity = ((1 - p) * 0.95).toFixed(3);
         }
       }
