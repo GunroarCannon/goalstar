@@ -411,6 +411,21 @@
       opacity: 0.82;
     }
 
+    .cgi-left-puff {
+      width: 5020px;
+      left: 20%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.92;
+    }
+
+    .cgi-left-sub {
+      width: 420px;
+      left: 52%;
+      top: 65%;
+      transform: translate(-50%, -50%) scaleX(-1);
+      opacity: 0.82;
+    }
     .cloud-gate-mist {
       position: absolute;
       inset: 0;
@@ -434,6 +449,7 @@
       .cgi-left-main { width: 440px; }
       .cgi-right-main { width: 480px; }
       .cgi-center-puff { width: 360px; }
+      .cgi-left-puff { width: 360px; }
     }
 
     /* Parting Cloud Shroud: Directly blocks the visualizer in the hero */
@@ -3429,6 +3445,8 @@
     
     <!-- Left Gate Wing -->
     <div class="cloud-gate-wing cloud-gate-left">
+      <img class="cloud-gate-item cgi-left-puff" src="assets/cloud.png" alt="">
+      <img class="cloud-gate-item cgi-left-sub" src="assets/cloud.png" alt="">
       <img class="cloud-gate-item cgi-left-main" src="assets/cloud.png" alt="">
       <img class="cloud-gate-item cgi-left-top" src="assets/cloud.png" alt="">
       <img class="cloud-gate-item cgi-left-bottom" src="assets/cloud.png" alt="">

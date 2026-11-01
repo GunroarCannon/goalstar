@@ -3280,7 +3280,7 @@ body.arrow-glow .hl { stroke: color-mix(in srgb, var(--gold) 22%, transparent); 
 }
 .tech-stack-sub {
   padding: 80px 0 -110px;
-  top: -40%;
+  top: -30%;
 color: rgb(1,0,0);
 }
 
