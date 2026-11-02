@@ -45,9 +45,9 @@ export class SketchTour {
       {
         id: 'goal-picker',
         title: 'Goals menu',
-        text: 'Switch between goals or press <b>+ New goal</b> to map a new path from where you are today.',
+        text: 'Switch between active goals or view the current target outcome.',
         onEnter: () => { window.clearSelect?.(); },
-        targetSelector: () => document.getElementById('boardPick') || document.getElementById('newGoalBtn')
+        targetSelector: () => document.getElementById('goalPickerBtn') || document.getElementById('boardPick')
       },
       {
         id: 'goal-head',
@@ -182,9 +182,15 @@ export class SketchTour {
         text: 'Recalls historical blockers from Walrus on Mainnet, applying friction penalties to matching routes.',
         onEnter: () => {
           window.clearSelect?.();
-          document.getElementById('lastTuesdayBanner')?.scrollIntoView?.({ behavior: 'auto', block: 'center' });
+          document.body.classList.add('side-open');
+          const b = document.getElementById('lastTuesdayBanner');
+          if (b && b.hidden) {
+            b.hidden = false;
+            b.dataset.tourTemp = 'true';
+          }
+          b?.scrollIntoView?.({ behavior: 'auto', block: 'center' });
         },
-        targetSelector: () => document.getElementById('lastTuesdayBanner') || document.querySelector('.tuesday-banner')
+        targetSelector: () => (document.getElementById('lastTuesdayBanner')?.offsetParent ? document.getElementById('lastTuesdayBanner') : null) || document.querySelector('.telemetry-box') || document.querySelector('.telemetry-pill')
       },
       {
         id: 'walrus-memory',
@@ -212,10 +218,10 @@ export class SketchTour {
       },
       {
         id: 'themes',
-        title: 'Theme picker',
-        text: 'Personalize the interface: Notebook, Monograph, Chalkboard, Blueprint, Sunset, or Terminal.',
+        title: 'Theme switcher',
+        text: 'Toggle dark or light mode instantly with the 3D switch, or open Settings to choose palettes like Chalkboard, Blueprint, or Notebook.',
         onEnter: () => { window.clearSelect?.(); },
-        targetSelector: () => document.getElementById('themeSelect') || document.getElementById('themeSwitch')
+        targetSelector: () => (document.getElementById('themeSelect')?.offsetParent ? document.getElementById('themeSelect') : null) || document.getElementById('themeSwitch') || document.getElementById('settingsBtn')
       }
     ];
 
@@ -284,6 +290,11 @@ export class SketchTour {
     localStorage.setItem(this.storageKey, 'true');
     window.stopTourBounce?.();
     window.clearSelect?.();
+    const b = document.getElementById('lastTuesdayBanner');
+    if (b?.dataset?.tourTemp) {
+      b.hidden = true;
+      delete b.dataset.tourTemp;
+    }
     if (this.overlay) {
       this.overlay.remove();
       this.overlay = null;
@@ -416,13 +427,21 @@ export class SketchTour {
 
     const container = this.overlay.querySelector('.sketch-card-container');
     const card = this.overlay.querySelector('.sketch-card');
-    const cardW = Math.min(380, window.innerWidth - 28);
+    const isMobile = window.innerWidth <= 600;
+    const margin = isMobile ? 8 : 14;
+    const maxAllowedW = Math.min(350, window.innerWidth - margin * 2);
+    const cardW = isMobile ? Math.max(260, window.innerWidth - margin * 2) : maxAllowedW;
     container.style.width = `${cardW}px`;
-    const cardH = Math.min(card.offsetHeight || 300, window.innerHeight - 88);
+    container.style.maxWidth = `${window.innerWidth - margin * 2}px`;
 
-    const margin = 16;
-    const headH = headerEl?.offsetHeight || 56;
-    const minTop = Math.min(headH + 8, Math.round(window.innerHeight * 0.25));
+    const headH = headerEl?.offsetHeight || 52;
+    const minTop = Math.min(headH + 6, Math.max(margin, Math.round(window.innerHeight * 0.15)));
+    
+    // Temporarily clear inline maxHeight to measure true rendered height with width applied
+    card.style.maxHeight = 'none';
+    const naturalH = card.offsetHeight || 220;
+    const maxRoomH = Math.max(140, window.innerHeight - minTop - margin);
+    const cardH = Math.min(naturalH, maxRoomH);
     const maxTop = Math.max(minTop, window.innerHeight - cardH - margin);
 
     const spaceBelow = window.innerHeight - (spot.y + spot.h);
@@ -432,37 +451,49 @@ export class SketchTour {
 
     let left, top;
 
-    if (inHeader) {
+    if (isMobile) {
+      left = (window.innerWidth - cardW) / 2;
+      if (spot.y < window.innerHeight / 2) {
+        top = spot.y + spot.h + 10;
+      } else {
+        top = spot.y - cardH - 10;
+      }
+    } else if (inHeader) {
       // Header sits across the top: card goes under the spotlight.
       left = spot.x + spot.w / 2 - cardW / 2;
-      top = spot.y + spot.h + 14;
+      top = spot.y + spot.h + 12;
     } else if (inSide) {
       // Sidebar is a full-height column on the left: card goes over the canvas,
-      // right of the sidebar, vertically near the spotlight.
+      // right of the sidebar if room permits, otherwise centered
       const sideRight = sideEl ? sideEl.getBoundingClientRect().right : spot.x + spot.w;
-      left = sideRight + 18;
-      top = spot.y + spot.h / 2 - cardH / 2;
-    } else if (inInspector) {
-      // Inspector is on the right: card goes to its left when there is room.
-      const inspLeft = inspectorEl ? inspectorEl.getBoundingClientRect().left : spot.x;
-      if (window.innerWidth >= 1000 && inspLeft - cardW - 24 > margin) {
-        left = inspLeft - cardW - 18;
+      if (window.innerWidth - sideRight >= cardW + margin * 2) {
+        left = sideRight + 14;
         top = spot.y + spot.h / 2 - cardH / 2;
       } else {
         left = (window.innerWidth - cardW) / 2;
-        top = spot.y - cardH - 16;
+        top = spot.y > window.innerHeight / 2 ? spot.y - cardH - 12 : spot.y + spot.h + 12;
       }
-    } else if (spaceBelow >= cardH + 28) {
+    } else if (inInspector) {
+      // Inspector is on the right: card goes to its left when there is room.
+      const inspLeft = inspectorEl ? inspectorEl.getBoundingClientRect().left : spot.x;
+      if (inspLeft >= cardW + margin * 2) {
+        left = inspLeft - cardW - 14;
+        top = spot.y + spot.h / 2 - cardH / 2;
+      } else {
+        left = (window.innerWidth - cardW) / 2;
+        top = spot.y > window.innerHeight / 2 ? spot.y - cardH - 12 : spot.y + spot.h + 12;
+      }
+    } else if (spaceBelow >= cardH + 20) {
       left = spot.x + spot.w / 2 - cardW / 2;
-      top = spot.y + spot.h + 16;
-    } else if (spaceAbove >= cardH + 28) {
+      top = spot.y + spot.h + 14;
+    } else if (spaceAbove >= cardH + 20) {
       left = spot.x + spot.w / 2 - cardW / 2;
-      top = spot.y - cardH - 16;
-    } else if (spaceRight >= cardW + 30) {
-      left = spot.x + spot.w + 18;
+      top = spot.y - cardH - 14;
+    } else if (spaceRight >= cardW + 20) {
+      left = spot.x + spot.w + 14;
       top = spot.y + spot.h / 2 - cardH / 2;
-    } else if (spaceLeft >= cardW + 30) {
-      left = spot.x - cardW - 18;
+    } else if (spaceLeft >= cardW + 20) {
+      left = spot.x - cardW - 14;
       top = spot.y + spot.h / 2 - cardH / 2;
     } else {
       left = (window.innerWidth - cardW) / 2;
@@ -471,6 +502,11 @@ export class SketchTour {
 
     left = clamp(left, margin, Math.max(margin, window.innerWidth - cardW - margin));
     top = clamp(top, minTop, maxTop);
+
+    // Dynamic max-height constraint so the card NEVER overflows the viewport bottom:
+    const fitH = Math.max(130, window.innerHeight - top - margin);
+    card.style.maxHeight = `${Math.floor(fitH)}px`;
+    card.style.overflowY = 'auto';
 
     container.style.left = `${Math.round(left)}px`;
     container.style.top = `${Math.round(top)}px`;

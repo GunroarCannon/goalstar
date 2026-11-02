@@ -412,18 +412,18 @@
     }
 
     .cgi-left-puff {
-      width: 520px;
+      width: 5020px;
       left: 20%;
-      top: 10%;
-      transform: translate(-50%, -50%) scale(0.6);
+      top: 50%;
+      transform: translate(-50%, -50%);
       opacity: 0.92;
     }
 
     .cgi-left-sub {
       width: 420px;
-      left: 82%;
-      top: 15%;
-      transform: translate(-50%, -50%) scale(1);
+      left: 52%;
+      top: 65%;
+      transform: translate(-50%, -50%) scaleX(-1);
       opacity: 0.82;
     }
     .cloud-gate-mist {
@@ -900,7 +900,18 @@
       transform-origin: left center;
       will-change: transform;
       transition: transform 0.15s ease-out;
-      opacity: 0;
+    }
+
+    .ink-swash-svg path#heroInkCalligraphyPath {
+      fill: var(--accent) !important;
+      opacity: 0.38;
+      transition: fill 0.3s ease, opacity 0.3s ease;
+    }
+
+    .ink-swash-svg path#heroInkStrokePath {
+      stroke: var(--accent-hover, var(--accent)) !important;
+      opacity: 0.85;
+      transition: stroke 0.3s ease, opacity 0.3s ease;
     }
 
     .hero-desc {
@@ -3446,8 +3457,8 @@
     
     <!-- Left Gate Wing -->
     <div class="cloud-gate-wing cloud-gate-left">
-      <img class="cloud-gate-item cgi-left-puff" src="assets/cloud.png" alt=""-->
-      <img class="cloud-gate-item cgi-left-sub" src="assets/cloud.png" alt=""-->
+      <img class="cloud-gate-item cgi-left-puff" src="assets/cloud.png" alt="">
+      <img class="cloud-gate-item cgi-left-sub" src="assets/cloud.png" alt="">
       <img class="cloud-gate-item cgi-left-main" src="assets/cloud.png" alt="">
       <img class="cloud-gate-item cgi-left-top" src="assets/cloud.png" alt="">
       <img class="cloud-gate-item cgi-left-bottom" src="assets/cloud.png" alt="">
@@ -3496,10 +3507,10 @@
                 </filter>
               </defs>
               <path id="heroInkCalligraphyPath" filter="url(#inkBleedFilter)"
-                d="M 8 20 C 45 16, 95 24, 150 22 C 210 20, 265 14, 320 10 C 330 9, 335 12, 330 15 C 290 23, 220 27, 160 27 C 100 27, 40 24, 8 20 Z" fill="#d97706" />
+                d="M 8 20 C 45 16, 95 24, 150 22 C 210 20, 265 14, 320 10 C 330 9, 335 12, 330 15 C 290 23, 220 27, 160 27 C 100 27, 40 24, 8 20 Z" fill="var(--accent)" />
               <path id="heroInkStrokePath" filter="url(#inkBleedFilter)"
                 d="M 12 18 C 65 24, 145 25, 230 18 C 275 14, 310 11, 328 10"
-                stroke="#b45309" stroke-width="3" stroke-linecap="round" fill="none" />
+                stroke="var(--accent-hover, var(--accent))" stroke-width="3" stroke-linecap="round" fill="none" />
             </svg>
           </span>
         </h1>
@@ -3649,23 +3660,27 @@
             <div class="cardboard-tape top-solid"></div>
             <div class="cb-inner">
               <div class="cb-header">
-                <span class="cb-tag">TATUM // SUI RPC GATEWAY</span>
-                <span class="cb-badge live-sui">GATEWAY ACTIVE</span>
+                <span class="cb-tag">TATUM // WALRUS STORAGE &amp; SUI RPC</span>
+                <span class="cb-badge live-sui">STORAGE &amp; GATEWAY ACTIVE</span>
               </div>
-              <h3 class="cb-title">Tatum Sui RPC Gateway</h3>
-              <div class="cb-meta">Sui Mainnet Node · api.tatum.io/v3 · Armored RPC</div>
+              <h3 class="cb-title">Tatum Walrus Storage &amp; Sui RPC</h3>
+              <div class="cb-meta">Walrus API v4 · Sui Mainnet Node · Armored Gateway</div>
 
               <div class="cb-rule">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
 
               <div class="cb-telemetry-box">
-                <div class="cb-telemetry-title">SLIDING-WINDOW QUOTA ARMOR</div>
-                <div class="cb-telemetry-status">3 REQ/S PROTECTION + 15S IN-MEMORY CACHE</div>
+                <div class="cb-telemetry-title">TATUM WALRUS STORAGE &amp; QUOTA ARMOR</div>
+                <div class="cb-telemetry-status">NATIVE /v4/data/storage + 3 REQ/S PROTECTION</div>
               </div>
 
               <ul class="cb-spec-list">
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Verifiable Milestone Proofs:</strong> Completed milestones are cryptographically stamped with live Sui checkpoint sequences.
+                  <strong>Native Walrus Storage:</strong> Uses Tatum's <code>/v4/data/storage/upload</code> API to register and certify milestone blobs directly on Walrus Mainnet.
+                </li>
+                <li>
+                  <span class="cb-bullet">▸</span>
+                  <strong>Verifiable Milestone Proofs:</strong> Completed milestones are cryptographically stamped with live Sui checkpoint sequences via Tatum Gateway.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
@@ -3673,16 +3688,12 @@
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Real-Time Checkpoint Sync:</strong> Direct polling of <code>sui_getLatestCheckpointSequenceNumber</code> verifies live health.
-                </li>
-                <li>
-                  <span class="cb-bullet">▸</span>
-                  <strong>Autonomous Agent Ready:</strong> Built-in Express API endpoints powering decentralized agent verification.
+                  <strong>On-Chain Certification:</strong> Automated tracking of Sui object IDs and Walrus storage events (<code>certified</code> tx digest).
                 </li>
               </ul>
 
               <div class="cb-footer">
-                <span class="cb-endpoint">GATEWAY: api.tatum.io/v3/blockchain/node/sui-mainnet</span>
+                <span class="cb-endpoint">STORAGE: api.tatum.io/v4/data/storage/upload</span>
                 <span class="cb-stamp">VERIFIED ONCHAIN</span>
               </div>
             </div>
@@ -4743,10 +4754,9 @@
     // The ink underline under "Portable Memory" animates from nothing to fullness on scroll
     function setInkProgress(p) {
       if (!inkSwashSvg) return;
-      inkSwashSvg.style.opacity = 1;
       const strokePath = document.getElementById('heroInkStrokePath');
       if (strokePath) {
-        const len = (strokePath.getTotalLength() || 340);
+        const len = strokePath.getTotalLength() || 340;
         strokePath.style.strokeDasharray = `${len}`;
         strokePath.style.strokeDashoffset = `${len * (1 - Math.min(1, Math.max(0, p)))}`;
       }
@@ -4756,15 +4766,13 @@
       }
     }
 
-
     function updateInkScroll() {
       if (!inkSwashSvg) return;
-      const rectTop = inkSwashSvg.getBoundingClientRect().top;
-      
+      const rect = inkSwashSvg.getBoundingClientRect();
       const winH = window.innerHeight || 800;
       const triggerStart = winH * 0.92;
-      const triggerEnd = winH * 0.24;
-      const p = 1-Math.max(0,(rectTop-triggerEnd)/triggerEnd); //(triggerStart - rectTop) / (triggerStart - triggerEnd);
+      const triggerEnd = winH * 0.35;
+      const p = (triggerStart - rect.top) / (triggerStart - triggerEnd);
       setInkProgress(Math.min(1, Math.max(0, p)));
     }
 
@@ -4898,7 +4906,7 @@
           if (cls) cls.style.transform = `translate3d(-${(p * partDist * 0.85).toFixed(1)}px, ${(p * 35).toFixed(1)}px, 0) scale(${1 + p * 0.1}) rotate(-${(p * 9).toFixed(1)}deg)`;
           if (crp) crp.style.transform = `translate3d(${(p * partDist * 1.1).toFixed(1)}px, -${(p * 40).toFixed(1)}px, 0) scaleX(-1) scale(${1 + p * 0.15}) rotate(${(p * 14).toFixed(1)}deg)`;
           if (crs) crs.style.transform = `translate3d(${(p * partDist * 0.85).toFixed(1)}px, ${(p * 45).toFixed(1)}px, 0) scaleX(-1) scale(${1 + p * 0.1}) rotate(${(p * 9).toFixed(1)}deg)`;
-          if (ccp) ccp.style.transform = `translate(-50%, -50%) translate3d(-${(p * partDist * 2.1).toFixed(1)}px, -${(p * 45).toFixed(1)}px, 0) scale(${(1 - p * 0.7).toFixed(2)})`;
+          if (ccp) ccp.style.transform = `translate(-50%, -50%) scale(${(1 - p * 0.7).toFixed(2)})`;
           if (mist) mist.style.opacity = ((1 - p) * 0.95).toFixed(3);
         }
       }
@@ -5724,7 +5732,6 @@
         launchCustomGoal();
       });
     });
-
   </script>
 </body>
 </html>

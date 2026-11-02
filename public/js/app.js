@@ -160,7 +160,10 @@ function setBusy(on, label = '') {
 
   $('#status').innerHTML = on ? `<span class="spin">*</span> ${esc(label)}` : '';
 
-  for (const id of ['#dreamBtn', '#searchBtn', '#newGoalBtn', '#detailPathBtn']) $(id).disabled = on;
+  for (const id of ['#dreamBtn', '#searchBtn', '#newGoalBtn', '#detailPathBtn']) {
+    const el = $(id);
+    if (el) el.disabled = on;
+  }
 
   for (const b of document.querySelectorAll('.inspector .dream')) b.disabled = on;
 
@@ -194,7 +197,18 @@ const canvas = new Canvas($('#canvas'), {
 
   onLink: (from, to) => link(from, to),
 
-  onTidy: () => { if (board()) { tidy(board()); persist(); refresh(); canvas.fit(); } },
+  onTidy: () => {
+    if (board()) {
+      const b = board();
+      const currentLevel = (b.tidyLevel && [1, 2, 3].includes(b.tidyLevel)) ? b.tidyLevel : 0;
+      const nextLevel = (currentLevel % 3) + 1;
+      b.tidyLevel = nextLevel;
+      tidy(b, nextLevel);
+      persist();
+      refresh();
+      canvas.fit();
+    }
+  },
 
 });
 
@@ -731,29 +745,29 @@ function renderInspector() {
       ${n.kind === 'state' ? `
 
       <div class="block-box ${n.blocked ? 'on' : ''}">
-
         <div class="block-head">
-
-          <b>Route control</b>
-
+          <span class="block-title">Route control</span>
           <span class="block-state ${n.blocked ? n.blocked.level : ''}">${n.blocked ? (n.blocked.level === 'impossible' ? 'Out of reach' : 'Very expensive') : 'Open'}</span>
-
         </div>
-
-        <div class="muted small">Facts change: a refusal, a closed program, no money, no time. Mark this milestone so A* stops routing through it.</div>
-
-        <input data-f="blockReason" placeholder="Why? e.g. visa refused, cohort closed, need $8k" value="${esc(n.blockReason || '')}">
-
-        <div class="row gap">
-
-          <button data-act="block-expensive" title="Keep it on the map but make every route through it cost 2.5× more">Very expensive</button>
-
-          <button data-act="block-impossible" class="danger" title="Drop it from every route without deleting the card">Out of reach</button>
-
-          ${n.blocked ? '<button data-act="unblock">Reopen route</button>' : ''}
-
-        </div>
-
+        <div class="muted small block-desc">Facts change: a refusal, a closed program, no money, no time. Mark this milestone so A* stops routing through it.</div>
+        <input data-f="blockReason" class="block-reason-input" placeholder="Why? e.g. visa refused, cohort closed, need $8k" value="${esc(n.blockReason || '')}">
+        ${n.blocked ? `
+          <div class="unblock-action-wrap">
+            <button data-act="unblock" class="unblock-btn" title="Remove block and let A* route through this milestone again">🔓 Reopen route</button>
+          </div>
+          <div class="block-alt-row">
+            <span class="muted micro">Change obstruction level:</span>
+            <div class="row gap wrap block-btn-row">
+              <button data-act="block-expensive" class="mini-btn ${n.blocked.level === 'expensive' ? 'active-level' : ''}" title="Keep it on the map but make every route through it cost 2.5× more">Very expensive (2.5×)</button>
+              <button data-act="block-impossible" class="mini-btn danger ${n.blocked.level === 'impossible' ? 'active-level' : ''}" title="Drop it from every route without deleting the card">Out of reach</button>
+            </div>
+          </div>
+        ` : `
+          <div class="row gap wrap block-btn-row">
+            <button data-act="block-expensive" title="Keep it on the map but make every route through it cost 2.5× more">Very expensive</button>
+            <button data-act="block-impossible" class="danger" title="Drop it from every route without deleting the card">Out of reach</button>
+          </div>
+        `}
       </div>
 
       <div class="sui-box">
@@ -1977,7 +1991,7 @@ $('#importFile').addEventListener('change', async (ev) => {
 
 // ---------- wiring ----------
 
-$('#newGoalBtn').addEventListener('click', openNewGoal);
+$('#newGoalBtn')?.addEventListener('click', openNewGoal);
 
 $('#emptyNewBtn').addEventListener('click', openNewGoal);
 

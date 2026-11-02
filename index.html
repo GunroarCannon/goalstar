@@ -65,13 +65,12 @@
       </div>
       <select id="boardPick" title="Your goals" aria-label="Your goals" style="display:none;"></select>
     </div>
-    <button id="newGoalBtn" class="engraved-btn" title="New goal"><span aria-hidden="true">+</span><span class="txt"> New goal</span></button>
     <button id="newMilestoneBtn" class="engraved-btn" title="Create a new milestone on the canvas"><span aria-hidden="true">+</span><span class="txt"> Milestone</span></button>
 
     <!-- Search bar -->
     <div class="topbar-search">
       <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="search" id="topbarSearch" class="topbar-search-input" placeholder="Find goals, users, or agents…" autocomplete="off" aria-label="Search goals">
+      <input type="search" id="topbarSearch" class="topbar-search-input" placeholder="Search goals…" autocomplete="off" aria-label="Search goals">
     </div>
 
     <div class="spacer"></div>
@@ -81,19 +80,7 @@
     <button id="syncBtn" class="icon" title="Sync with GitHub Gist" aria-label="Sync"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></button>
 
     <!-- Explainer Guide -->
-    <button id="uiGuideBtn" class="guide-btn engraved-btn" title="Open Interactive UI Explainer Guide"><span style="color:var(--accent); font-weight:800;">?</span> Guide</button>
-
-    <!-- Hidden theme select (still wired in theme.js, but hidden from topbar — use Settings dialog) -->
-    <select id="themeSelect" class="theme-select engraved-select" title="Choose a theme" style="display:none;">
-      <option value="simple-dark">Minimal Dark</option>
-      <option value="simple-light">Minimal Light</option>
-      <option value="notebook">Notebook</option>
-      <option value="night">Chalkboard</option>
-      <option value="blueprint">Blueprint</option>
-      <option value="monograph">Monograph</option>
-      <option value="sunset">Sunset</option>
-      <option value="terminal">Terminal</option>
-    </select>
+    <button id="uiGuideBtn" class="guide-btn engraved-btn" title="Open Interactive UI Explainer Guide"><span style="color:var(--accent); font-weight:800;">?</span><span class="guide-txt"> Guide</span></button>
 
     <!-- 3D Toggle: Dark / Light (Vector SVG Icons, No Emojis) -->
     <button class="btn-3d-toggle" id="themeSwitch" role="switch" title="Toggle Light / Dark Mode" aria-label="Toggle light/dark" tabindex="0">
@@ -216,6 +203,11 @@
           <span class="indicator live"></span>
           <span class="lbl">Tatum Sui RPC:</span>
           <span id="tatumRpcBadge" class="val">Connecting...</span>
+        </div>
+        <div class="telemetry-pill" title="Native Walrus Storage uploads and certification via Tatum v4 Storage API">
+          <span class="indicator live"></span>
+          <span class="lbl">Tatum Walrus API:</span>
+          <span id="tatumStorageBadge" class="val">Active (/v4/data/storage)</span>
         </div>
         <div class="telemetry-pill" title="Stalled milestones are automatically decomposed after 48h using Walrus insights">
           <span class="indicator neutral"></span>

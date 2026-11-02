@@ -902,6 +902,18 @@
       transition: transform 0.15s ease-out;
     }
 
+    .ink-swash-svg path#heroInkCalligraphyPath {
+      fill: var(--accent) !important;
+      opacity: 0.38;
+      transition: fill 0.3s ease, opacity 0.3s ease;
+    }
+
+    .ink-swash-svg path#heroInkStrokePath {
+      stroke: var(--accent-hover, var(--accent)) !important;
+      opacity: 0.85;
+      transition: stroke 0.3s ease, opacity 0.3s ease;
+    }
+
     .hero-desc {
       font-size: 18px;
       line-height: 1.6;
@@ -3495,10 +3507,10 @@
                 </filter>
               </defs>
               <path id="heroInkCalligraphyPath" filter="url(#inkBleedFilter)"
-                d="M 8 20 C 45 16, 95 24, 150 22 C 210 20, 265 14, 320 10 C 330 9, 335 12, 330 15 C 290 23, 220 27, 160 27 C 100 27, 40 24, 8 20 Z" fill="#d97706" />
+                d="M 8 20 C 45 16, 95 24, 150 22 C 210 20, 265 14, 320 10 C 330 9, 335 12, 330 15 C 290 23, 220 27, 160 27 C 100 27, 40 24, 8 20 Z" fill="var(--accent)" />
               <path id="heroInkStrokePath" filter="url(#inkBleedFilter)"
                 d="M 12 18 C 65 24, 145 25, 230 18 C 275 14, 310 11, 328 10"
-                stroke="#b45309" stroke-width="3" stroke-linecap="round" fill="none" />
+                stroke="var(--accent-hover, var(--accent))" stroke-width="3" stroke-linecap="round" fill="none" />
             </svg>
           </span>
         </h1>
@@ -3648,23 +3660,27 @@
             <div class="cardboard-tape top-solid"></div>
             <div class="cb-inner">
               <div class="cb-header">
-                <span class="cb-tag">TATUM // SUI RPC GATEWAY</span>
-                <span class="cb-badge live-sui">GATEWAY ACTIVE</span>
+                <span class="cb-tag">TATUM // WALRUS STORAGE &amp; SUI RPC</span>
+                <span class="cb-badge live-sui">STORAGE &amp; GATEWAY ACTIVE</span>
               </div>
-              <h3 class="cb-title">Tatum Sui RPC Gateway</h3>
-              <div class="cb-meta">Sui Mainnet Node · api.tatum.io/v3 · Armored RPC</div>
+              <h3 class="cb-title">Tatum Walrus Storage &amp; Sui RPC</h3>
+              <div class="cb-meta">Walrus API v4 · Sui Mainnet Node · Armored Gateway</div>
 
               <div class="cb-rule">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
 
               <div class="cb-telemetry-box">
-                <div class="cb-telemetry-title">SLIDING-WINDOW QUOTA ARMOR</div>
-                <div class="cb-telemetry-status">3 REQ/S PROTECTION + 15S IN-MEMORY CACHE</div>
+                <div class="cb-telemetry-title">TATUM WALRUS STORAGE &amp; QUOTA ARMOR</div>
+                <div class="cb-telemetry-status">NATIVE /v4/data/storage + 3 REQ/S PROTECTION</div>
               </div>
 
               <ul class="cb-spec-list">
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Verifiable Milestone Proofs:</strong> Completed milestones are cryptographically stamped with live Sui checkpoint sequences.
+                  <strong>Native Walrus Storage:</strong> Uses Tatum's <code>/v4/data/storage/upload</code> API to register and certify milestone blobs directly on Walrus Mainnet.
+                </li>
+                <li>
+                  <span class="cb-bullet">▸</span>
+                  <strong>Verifiable Milestone Proofs:</strong> Completed milestones are cryptographically stamped with live Sui checkpoint sequences via Tatum Gateway.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
@@ -3672,16 +3688,12 @@
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Real-Time Checkpoint Sync:</strong> Direct polling of <code>sui_getLatestCheckpointSequenceNumber</code> verifies live health.
-                </li>
-                <li>
-                  <span class="cb-bullet">▸</span>
-                  <strong>Autonomous Agent Ready:</strong> Built-in Express API endpoints powering decentralized agent verification.
+                  <strong>On-Chain Certification:</strong> Automated tracking of Sui object IDs and Walrus storage events (<code>certified</code> tx digest).
                 </li>
               </ul>
 
               <div class="cb-footer">
-                <span class="cb-endpoint">GATEWAY: api.tatum.io/v3/blockchain/node/sui-mainnet</span>
+                <span class="cb-endpoint">STORAGE: api.tatum.io/v4/data/storage/upload</span>
                 <span class="cb-stamp">VERIFIED ONCHAIN</span>
               </div>
             </div>

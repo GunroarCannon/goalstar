@@ -31,6 +31,22 @@ async function main() {
     return;
   }
 
+  if (args.includes('--storage')) {
+    const res = await fetch(`${API_BASE}/api/tatum/walrus-uploads`);
+    const json = await res.json();
+    console.log('\n[Tatum Walrus Storage API (/v4/data/storage/uploads)]');
+    if (json.uploads && Array.isArray(json.uploads)) {
+      console.log(`- Total Uploads: ${json.uploads.length}`);
+      json.uploads.slice(0, 5).forEach((u, i) => {
+        console.log(`  ${i + 1}. Job ${u.jobId} | ${u.filename || 'blob'} | Status: ${u.status || 'N/A'} | Blob: ${u.blobId || 'N/A'}`);
+      });
+    } else {
+      console.log(`- Status:`, json);
+    }
+    console.log('');
+    return;
+  }
+
   if (args.includes('--seed')) {
     console.log('\nSeeding 10 workflow memories to Walrus Mainnet...');
     const res = await fetch(`${API_BASE}/api/memory/seed`, {
@@ -50,6 +66,7 @@ Usage:
   node cli/log.js "Your habit update or blocker description"
   node cli/log.js --status      Check Walrus Memory statistics
   node cli/log.js --sui         Check Tatum Sui RPC connection
+  node cli/log.js --storage     Check Tatum Walrus Storage API uploads
   node cli/log.js --seed        Pre-populate 10 memories on Mainnet
 `);
     return;

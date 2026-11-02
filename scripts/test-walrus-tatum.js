@@ -83,6 +83,29 @@ async function runTests() {
     console.error('❌ Friction match failed');
   }
 
+  // Test 4: Tatum Native Walrus Storage API
+  total++;
+  console.log('\n[Test 4] Querying Tatum Walrus Storage API (/v4/data/storage/uploads)...');
+  const tatumKey = process.env.TATUM_API_KEY;
+  if (!tatumKey) {
+    console.warn('⚠️ Tatum API Key not configured');
+  } else {
+    try {
+      const storageRes = await fetch('https://api.tatum.io/v4/data/storage/uploads', {
+        headers: { 'x-api-key': tatumKey }
+      });
+      if (storageRes.ok) {
+        const uploads = await storageRes.json();
+        console.log(`✓ Tatum Walrus Storage API Connected. Existing Uploads: ${uploads.length}`);
+        passed++;
+      } else {
+        console.error(`❌ Tatum Walrus Storage failed with status ${storageRes.status}`);
+      }
+    } catch (e) {
+      console.error('❌ Tatum Walrus Storage Error:', e.message);
+    }
+  }
+
   console.log('\n==================================================');
   console.log(`Summary: ${passed}/${total} tests passed.`);
   console.log('==================================================');

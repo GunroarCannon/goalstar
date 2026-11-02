@@ -1,11 +1,24 @@
 // Left-to-right layered layout: start on the left, goal on the right.
 
-// Cards are 230px wide; the 190px gutter between columns holds the action labels.
+// Cards are 230px wide; the gutter between columns holds the action labels.
 export const CARD_W = 230;
-export const COL = 420, ROW = 175;
-const X0 = 80, Y0 = 80;
 
-export function tidy(board) {
+// Spacing levels for Tidy (1: compact, 2: balanced/default, 3: spacious)
+export const TIDY_LEVELS = {
+  1: { col: 440, row: 210 }, // Level 1: Compact, clean (210px column gutter, 100px row gutter)
+  2: { col: 560, row: 270 }, // Level 2: Balanced, generous (330px column gutter, 160px row gutter)
+  3: { col: 700, row: 340 }, // Level 3: Spacious, wide (470px column gutter, 230px row gutter)
+};
+
+export const COL = TIDY_LEVELS[2].col, ROW = TIDY_LEVELS[2].row;
+const X0 = 80, Y0 = 100;
+
+export function tidy(board, level) {
+  const lvl = (level && TIDY_LEVELS[level]) ? level : (board.tidyLevel && TIDY_LEVELS[board.tidyLevel]) ? board.tidyLevel : 2;
+  board.tidyLevel = lvl;
+  const colSpacing = TIDY_LEVELS[lvl].col;
+  const rowSpacing = TIDY_LEVELS[lvl].row;
+
   const nodes = board.nodes;
   const ids = Object.keys(nodes);
   const edges = Object.values(board.edges).filter((e) => nodes[e.from] && nodes[e.to]);
@@ -53,25 +66,28 @@ export function tidy(board) {
   }
 
   const tallest = Math.max(...cols.map((c) => (c ? c.length : 0)));
-  const midY = Y0 + ((tallest - 1) / 2) * ROW;
+  const midY = Y0 + ((tallest - 1) / 2) * rowSpacing;
   for (const id of ids) {
-    nodes[id].x = X0 + depth[id] * COL;
-    nodes[id].y = midY + pos[id] * ROW;
+    nodes[id].x = X0 + depth[id] * colSpacing;
+    nodes[id].y = midY + pos[id] * rowSpacing;
   }
 }
 
-function collide(board, n) {
+function collide(board, n, colSpacing = COL, rowSpacing = ROW) {
   for (let tries = 0; tries < 60; tries++) {
     const hit = Object.values(board.nodes).some(
-      (o) => o !== n && o.x != null && Math.abs(o.x - n.x) < CARD_W + 40 && Math.abs(o.y - n.y) < ROW - 25,
+      (o) => o !== n && o.x != null && Math.abs(o.x - n.x) < CARD_W + 50 && Math.abs(o.y - n.y) < rowSpacing - 20,
     );
     if (!hit) return;
-    n.y += ROW / 2;
+    n.y += rowSpacing / 2;
   }
 }
 
 // Place freshly dreamed nodes next to whatever they connect to.
 export function placeNew(board, ids) {
+  const lvl = board.tidyLevel && TIDY_LEVELS[board.tidyLevel] ? board.tidyLevel : 2;
+  const colSpacing = TIDY_LEVELS[lvl].col;
+  const rowSpacing = TIDY_LEVELS[lvl].row;
   const nodes = board.nodes;
   const edges = Object.values(board.edges);
   const pending = new Set(ids.filter((id) => nodes[id] && nodes[id].x == null));
@@ -86,14 +102,14 @@ export function placeNew(board, ids) {
       if (inE) {
         const p = nodes[inE.from];
         const k = (childCount[p.id] = (childCount[p.id] ?? -1) + 1);
-        n.x = p.x + COL;
-        n.y = p.y + k * ROW;
+        n.x = p.x + colSpacing;
+        n.y = p.y + k * rowSpacing;
       } else if (outE) {
         const c = nodes[outE.to];
-        n.x = c.x - COL;
-        n.y = c.y + ROW;
+        n.x = c.x - colSpacing;
+        n.y = c.y + rowSpacing;
       } else continue;
-      collide(board, n);
+      collide(board, n, colSpacing, rowSpacing);
       pending.delete(id);
       progress = true;
     }
@@ -101,11 +117,12 @@ export function placeNew(board, ids) {
   }
   for (const id of pending) {
     const placed = Object.values(nodes).filter((n) => n.x != null);
-    nodes[id].x = nodes[board.startId].x + COL;
-    nodes[id].y = Math.max(...placed.map((n) => n.y)) + ROW;
+    nodes[id].x = nodes[board.startId].x + colSpacing;
+    nodes[id].y = Math.max(...placed.map((n) => n.y)) + rowSpacing;
+    collide(board, nodes[id], colSpacing, rowSpacing);
   }
 
   const goal = nodes[board.goalId];
   const maxX = Math.max(...Object.values(nodes).filter((n) => n !== goal).map((n) => n.x ?? 0));
-  if (goal.x < maxX + COL - 40) { goal.x = maxX + COL; collide(board, goal); }
+  if (goal.x < maxX + colSpacing - 40) { goal.x = maxX + colSpacing; collide(board, goal, colSpacing, rowSpacing); }
 }

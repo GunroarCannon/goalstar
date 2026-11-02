@@ -24,7 +24,7 @@ Traditional habit and goal planners fail because they are **static to-do lists**
 | Total Recall Requirement | How GoalStar Delivers |
 | :--- | :--- |
 | **01. Walrus Memory on Mainnet** | Fully integrated using `@mysten-incubation/memwal` writing directly to `https://relayer.memory.walrus.xyz`. |
-| **02. Tatum RPC for Onchain Data** | Connected to Tatum's Sui Gateway (`https://api.tatum.io/v3/blockchain/node/sui-mainnet`) for live checkpoint and milestone proof verification. |
+| **02. Tatum Sui RPC & Native Walrus Storage** | Connected to Tatum's Sui Gateway (`https://api.tatum.io/v3/blockchain/node/sui-mainnet`) for live checkpoint verification, plus Tatum's native Storage API (`/v4/data/storage/upload`) to certify milestone proofs directly on Walrus Mainnet. |
 | **03. At Least 10 Memories on Mainnet** | Built-in 1-click seeder (`npm run cli --seed` or UI button) storing 10 realistic habit velocity and blocker memories on Walrus Mainnet. |
 | **04. Published Blog Post & Docs** | Comprehensive writeup explaining the Walrus learning loop and Tatum Sui architecture. |
 | **05. Working Demo & Public Repo** | Fully functional local server, web interface, and portable CLI. |

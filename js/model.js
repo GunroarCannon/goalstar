@@ -49,12 +49,12 @@ export function getStarterBoard() {
     startId: startId,
     goalId: goalId,
     nodes: {
-      [startId]: { id: startId, kind: 'start', label: 'Now: Prototype Idea Ready', note: 'Ready to build autonomous workflow agent', h: 8.5, x: 80, y: 240, done: true },
-      [s1Id]: { id: s1Id, kind: 'state', label: 'Architecture & API Specs Finalized', note: 'Endpoints and schemas defined', h: 6.5, x: 340, y: 240, done: true },
-      [s2Id]: { id: s2Id, kind: 'state', label: 'Kubernetes Cluster & Docker Compose', note: 'Heavy DevOps configuration', h: 5.0, x: 620, y: 120, done: false },
-      [s3Id]: { id: s3Id, kind: 'state', label: 'Alternative: Deploy to Managed Cloud / PaaS', note: 'Zero-config serverless deployment', h: 3.5, x: 620, y: 360, done: false },
-      [s4Id]: { id: s4Id, kind: 'state', label: 'Walrus Memory & Sui Proofs Tested', note: '10 memories on Mainnet and Sui verification', h: 2.0, x: 880, y: 240, done: false },
-      [goalId]: { id: goalId, kind: 'goal', label: 'Production Launch on Mainnet', note: 'Live submission for Total Recall', h: 0, x: 1140, y: 240, done: false },
+      [startId]: { id: startId, kind: 'start', label: 'Now: Prototype Idea Ready', note: 'Ready to build autonomous workflow agent', h: 8.5, x: 80, y: 260, done: true },
+      [s1Id]: { id: s1Id, kind: 'state', label: 'Architecture & API Specs Finalized', note: 'Endpoints and schemas defined', h: 6.5, x: 540, y: 260, done: true },
+      [s2Id]: { id: s2Id, kind: 'state', label: 'Kubernetes Cluster & Docker Compose', note: 'Heavy DevOps configuration', h: 5.0, x: 1020, y: 110, done: false },
+      [s3Id]: { id: s3Id, kind: 'state', label: 'Alternative: Deploy to Managed Cloud / PaaS', note: 'Zero-config serverless deployment', h: 3.5, x: 1020, y: 410, done: false },
+      [s4Id]: { id: s4Id, kind: 'state', label: 'Walrus Memory & Sui Proofs Tested', note: '10 memories on Mainnet and Sui verification', h: 2.0, x: 1500, y: 260, done: false },
+      [goalId]: { id: goalId, kind: 'goal', label: 'Production Launch on Mainnet', note: 'Live submission for Total Recall', h: 0, x: 1980, y: 260, done: false },
     },
     edges: {
       'e1': { id: 'e1', from: startId, to: s1Id, label: 'Design system & Walrus data model', cost: { time: 2, money: 0, effort: 3, risk: 1 }, duration: '2 days', steps: [{ text: 'Draft schemas', done: true }] },
@@ -65,7 +65,8 @@ export function getStarterBoard() {
       'e6': { id: 'e6', from: s4Id, to: goalId, label: 'Submit to Hackathon & Share Demo', cost: { time: 1, money: 0, effort: 2, risk: 1 }, duration: '1 day' }
     },
     created: now(),
-    updated: now()
+    updated: now(),
+    tidyLevel: 2
   };
 }
 
@@ -121,7 +122,7 @@ export function createBoard({ goal, context = '', constraints = '', timeframe = 
     startId: start.id, goalId: goalNode.id,
     nodes: { [start.id]: start, [goalNode.id]: goalNode },
     edges: {},
-    created: now(), updated: now(),
+    created: now(), updated: now(), tidyLevel: 2,
   };
 }
 

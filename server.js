@@ -76,86 +76,7 @@ const TEMPLATE_FILE = path.join(DATA_DIR, 'templates.json');
 const WALRUS_PUBLISHER = process.env.WALRUS_PUBLISHER_URL || '';
 const WALRUS_AGGREGATOR = process.env.WALRUS_AGGREGATOR_URL || 'https://aggregator.walrus.space';
 
-const readJsonFile = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
-const writeJsonFile = (f, v) => fs.writeFileSync(f, JSON.stringify(v));
-const blobIndex = () => readJsonFile(BLOB_INDEX, {});
-
-async function publishBlob(payload, { kind = 'board', namespace = null, label = '' } = {}) {
-  const json = JSON.stringify(payload);
-  const id = crypto.createHash('sha256').update(json).digest('hex').slice(0, 32);
-  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
-  const idx = blobIndex();
-  if (!idx[id]) {
-    idx[id] = { id, kind, label, namespace: ns, at: new Date().toISOString(), bytes: json.length, storage: 'local' };
-    writeJsonFile(BLOB_INDEX, idx);
-  }
-  fs.mkdirSync(BLOB_DIR, { recursive: true }); // stays valid even if the cache dir is wiped
-  fs.writeFileSync(path.join(BLOB_DIR, `${id}.json`), json);
-
-  let storage = idx[id].storage || 'local';
-
-  if (WALRUS_PUBLISHER) {
-    try {
-      const res = await fetch(`${WALRUS_PUBLISHER}/v1/blobs?epochs=5`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json,
-      });
-      if (res.ok) {
-        const j = await res.json();
-        const blobId = j.newlyCreated?.blobObject?.blobId || j.alreadyCertified?.blobId;
-        if (blobId) {
-          idx[id] = { ...idx[id], storage: 'walrus_blob', blobId };
-          writeJsonFile(BLOB_INDEX, idx);
-          storage = 'walrus_blob';
-        }
-      }
-    } catch (e) { console.warn('[Walrus] publisher unavailable:', e.message); }
-  }
-
-  const mw = getMemwal();
-  if (mw) {
-    try {
-      await mw.remember(`[BLOB ${id}] ${kind} "${label}" ${json}`, ns);
-      if (storage === 'local') {
-        idx[id] = { ...idx[id], storage: 'walrus_memory' };
-        writeJsonFile(BLOB_INDEX, idx);
-        storage = 'walrus_memory';
-      }
-    } catch (e) { console.warn('[Walrus] blob memory write failed:', e.message); }
-  }
-
-  return { id, kind, storage, label, at: idx[id].at, bytes: json.length, url: `/api/walrus/blob/${id}` };
-}
-
-async function readBlob(id) {
-  if (!/^[a-f0-9]{8,64}$/.test(String(id || ''))) return null;
-  const file = path.join(BLOB_DIR, `${id}.json`);
-  if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
-
-  const meta = blobIndex()[id];
-  if (meta?.blobId && WALRUS_AGGREGATOR) {
-    try {
-      const r = await fetch(`${WALRUS_AGGREGATOR}/v1/blobs/${meta.blobId}`);
-      if (r.ok) return await r.json();
-    } catch { /* fall through to memory */ }
-  }
-
-  const mw = getMemwal();
-  if (mw) {
-    try {
-      const resp = await mw.recall({ query: `BLOB ${id}`, limit: 8, namespace: meta?.namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows' });
-      for (const item of resp.results || []) {
-        const text = String(item.text || '');
-        const at = text.indexOf(`[BLOB ${id}]`);
-        if (at < 0) continue;
-        const brace = text.indexOf('{', at);
-        if (brace >= 0) return JSON.parse(text.slice(brace));
-      }
-    } catch (e) { console.warn('[Walrus] blob recall failed:', e.message); }
-  }
-  return null;
-}
-
-// ---- Tatum Sui RPC Gateway Client with Free Tier Quota Protection ----
+// ---- Tatum Sui RPC Gateway & Native Walrus Storage Client ----
 const TATUM_RPC_URL = process.env.TATUM_SUI_RPC_URL || 'https://api.tatum.io/v3/blockchain/node/sui-mainnet';
 const TATUM_API_KEY = process.env.TATUM_API_KEY || '';
 
@@ -208,13 +129,184 @@ async function callSuiRpc(method, params = []) {
       body: JSON.stringify(payload),
     });
     const json = await res.json();
+    if (json.statusCode === 404 || json.error) {
+      const fb = await fetch('https://fullnode.mainnet.sui.io:443', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const fbJson = await fb.json();
+      const fbResult = fbJson.result ?? fbJson;
+      rpcCache.set(cacheKey, { data: fbResult, at: now });
+      return fbResult;
+    }
     const result = json.result ?? json;
     rpcCache.set(cacheKey, { data: result, at: now });
     return result;
   } catch (err) {
-    console.warn(`[Tatum Sui RPC] Error on ${method}:`, err.message);
-    throw err;
+    try {
+      const fb = await fetch('https://fullnode.mainnet.sui.io:443', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const fbJson = await fb.json();
+      const fbResult = fbJson.result ?? fbJson;
+      rpcCache.set(cacheKey, { data: fbResult, at: now });
+      return fbResult;
+    } catch (fbErr) {
+      console.warn(`[Tatum Sui RPC] Error on ${method}:`, err.message);
+      throw err;
+    }
   }
+}
+
+// Upload file directly to Walrus using Tatum's native Storage API (/v4/data/storage/upload)
+async function uploadToTatumWalrus(jsonString, filename = 'milestone.json') {
+  if (!TATUM_API_KEY) return null;
+  try {
+    await waitForRateLimit();
+    const form = new FormData();
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    form.append('file', blob, filename);
+
+    const res = await fetch('https://api.tatum.io/v4/data/storage/upload', {
+      method: 'POST',
+      headers: { 'x-api-key': TATUM_API_KEY },
+      body: form,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      console.log(`[Tatum Walrus Storage] Uploaded ${filename}:`, data.jobId, data.blobId);
+      return data;
+    } else {
+      const err = await res.text();
+      console.warn('[Tatum Walrus Storage] Upload failed:', res.status, err);
+    }
+  } catch (e) {
+    console.warn('[Tatum Walrus Storage] Error:', e.message);
+  }
+  return null;
+}
+
+const readJsonFile = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
+const writeJsonFile = (f, v) => fs.writeFileSync(f, JSON.stringify(v));
+const blobIndex = () => readJsonFile(BLOB_INDEX, {});
+
+async function publishBlob(payload, { kind = 'board', namespace = null, label = '' } = {}) {
+  const json = JSON.stringify(payload);
+  const id = crypto.createHash('sha256').update(json).digest('hex').slice(0, 32);
+  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
+  const idx = blobIndex();
+  if (!idx[id]) {
+    idx[id] = { id, kind, label, namespace: ns, at: new Date().toISOString(), bytes: json.length, storage: 'local' };
+    writeJsonFile(BLOB_INDEX, idx);
+  }
+  fs.mkdirSync(BLOB_DIR, { recursive: true }); // stays valid even if the cache dir is wiped
+  fs.writeFileSync(path.join(BLOB_DIR, `${id}.json`), json);
+
+  let storage = idx[id].storage || 'local';
+
+  // Primary: Native Walrus Storage via Tatum Storage API (/v4/data/storage/upload)
+  if (TATUM_API_KEY) {
+    try {
+      const tatumUpload = await uploadToTatumWalrus(json, `${kind}-${id.slice(0, 8)}.json`);
+      if (tatumUpload && tatumUpload.blobId) {
+        idx[id] = {
+          ...idx[id],
+          storage: 'walrus_tatum',
+          tatumJobId: tatumUpload.jobId,
+          blobId: tatumUpload.blobId,
+          walrusStatus: tatumUpload.status || 'PENDING',
+          downloadUrl: `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${tatumUpload.blobId}`
+        };
+        writeJsonFile(BLOB_INDEX, idx);
+        storage = 'walrus_tatum';
+      }
+    } catch (e) {
+      console.warn('[Tatum Walrus Storage] publish failed:', e.message);
+    }
+  }
+
+  // Fallback / Direct publisher if configured
+  if (storage === 'local' && WALRUS_PUBLISHER) {
+    try {
+      const res = await fetch(`${WALRUS_PUBLISHER}/v1/blobs?epochs=5`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json,
+      });
+      if (res.ok) {
+        const j = await res.json();
+        const blobId = j.newlyCreated?.blobObject?.blobId || j.alreadyCertified?.blobId;
+        if (blobId) {
+          idx[id] = { ...idx[id], storage: 'walrus_blob', blobId };
+          writeJsonFile(BLOB_INDEX, idx);
+          storage = 'walrus_blob';
+        }
+      }
+    } catch (e) { console.warn('[Walrus] publisher unavailable:', e.message); }
+  }
+
+  // Always mirror into Memwal decentralized portable memory
+  const mw = getMemwal();
+  if (mw) {
+    try {
+      await mw.remember(`[BLOB ${id}] ${kind} "${label}" ${json}`, ns);
+      if (storage === 'local') {
+        idx[id] = { ...idx[id], storage: 'walrus_memory' };
+        writeJsonFile(BLOB_INDEX, idx);
+        storage = 'walrus_memory';
+      }
+    } catch (e) { console.warn('[Walrus] blob memory write failed:', e.message); }
+  }
+
+  return {
+    id,
+    kind,
+    storage,
+    label,
+    blobId: idx[id]?.blobId || null,
+    tatumJobId: idx[id]?.tatumJobId || null,
+    at: idx[id].at,
+    bytes: json.length,
+    url: `/api/walrus/blob/${id}`
+  };
+}
+
+async function readBlob(id) {
+  if (!/^[a-f0-9]{8,64}$/.test(String(id || ''))) return null;
+  const file = path.join(BLOB_DIR, `${id}.json`);
+  if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+
+  const meta = blobIndex()[id];
+  if (meta?.blobId) {
+    const aggregators = [
+      'https://aggregator.walrus-mainnet.walrus.space',
+      WALRUS_AGGREGATOR,
+      'https://aggregator.walrus.space'
+    ];
+    for (const agg of aggregators) {
+      if (!agg) continue;
+      try {
+        const r = await fetch(`${agg}/v1/blobs/${meta.blobId}`);
+        if (r.ok) return await r.json();
+      } catch { /* fall through */ }
+    }
+  }
+
+  const mw = getMemwal();
+  if (mw) {
+    try {
+      const resp = await mw.recall({ query: `BLOB ${id}`, limit: 8, namespace: meta?.namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows' });
+      for (const item of resp.results || []) {
+        const text = String(item.text || '');
+        const at = text.indexOf(`[BLOB ${id}]`);
+        if (at < 0) continue;
+        const brace = text.indexOf('{', at);
+        if (brace >= 0) return JSON.parse(text.slice(brace));
+      }
+    } catch (e) { console.warn('[Walrus] blob recall failed:', e.message); }
+  }
+  return null;
 }
 
 // ==========================================
@@ -255,6 +347,10 @@ app.get('/api/health', async (req, res) => {
       keyConfigured: !!TATUM_API_KEY,
       latestCheckpoint: suiCheckpoint,
       rateLimitRps: RATE_LIMIT_RPS,
+      walrusStorage: {
+        configured: !!TATUM_API_KEY,
+        endpoint: 'https://api.tatum.io/v4/data/storage/upload'
+      }
     },
   });
 });
@@ -268,7 +364,10 @@ app.get('/api/config', (req, res) => {
       namespace: process.env.MEMWAL_NAMESPACE || 'goalstar-workflows',
       publisher: !!WALRUS_PUBLISHER,
     },
-    tatum: { configured: !!process.env.TATUM_API_KEY },
+    tatum: {
+      configured: !!process.env.TATUM_API_KEY,
+      walrusStorage: !!process.env.TATUM_API_KEY,
+    },
   });
 });
 
@@ -304,10 +403,10 @@ app.get('/api/memory/stats', (req, res) => {
 
 // Write Memory (Single)
 app.post('/api/memory/remember', async (req, res) => {
-  const { text, namespace, friction, category } = req.body;
+  const { text, namespace, friction, category } = req.body || {};
   if (!text) return res.status(400).json({ error: 'Text required' });
 
-  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
+  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-recall-app';
   recordPending(ns, text);
 
   const entry = {
@@ -338,8 +437,8 @@ app.post('/api/memory/remember', async (req, res) => {
 
 // Recall Memories
 app.post('/api/memory/recall', async (req, res) => {
-  const { query = 'workflow blockers and habits', namespace, limit = 12 } = req.body;
-  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
+  const { query = 'workflow blockers and habits', namespace, limit = 12 } = req.body || {};
+  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-recall-app';
   const mw = getMemwal();
 
   let results = [];
@@ -370,6 +469,18 @@ app.post('/api/memory/recall', async (req, res) => {
   }
 
   res.json({ results, namespace: ns, count: results.length });
+});
+
+// Wipe local memories and reset pending queue
+app.post('/api/memory/wipe', (req, res) => {
+  const ns = req.body?.namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-recall-app';
+  pendingQueue.delete(ns);
+  try {
+    fs.writeFileSync(LOG_FILE, '');
+  } catch (e) {}
+  stats.written = 0;
+  stats.recalls = 0;
+  res.json({ success: true, message: 'Local memory log wiped and pending queue cleared', namespace: ns });
 });
 
 // Pre-seed 10 Core Memories (Guarantees Rule #3: At least 10 memories on Mainnet)
@@ -531,14 +642,60 @@ app.post('/api/tatum/stamp-milestone', async (req, res) => {
         network: 'Sui Mainnet (Tatum Gateway)',
         checkpoint: checkpoint,
         proofDigest: '0x' + digest.slice(0, 40),
-        walrusBlobId: blob.id,
+        walrusBlobId: blob.blobId || blob.id,
+        tatumJobId: blob.tatumJobId || null,
         walrusStorage: blob.storage,
         certificateUrl: blob.url,
-        shareLink: `/index.html?cert=walrus://${blob.id}`,
+        tatumWalrusUrl: blob.blobId ? `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${blob.blobId}` : null,
+        shareLink: `/index.html?cert=walrus://${blob.blobId || blob.id}`,
         timestamp: new Date().toISOString(),
         verified: true,
       },
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Tatum Walrus Storage API: List all uploads (/v4/data/storage/uploads)
+app.get('/api/tatum/walrus-uploads', async (req, res) => {
+  if (!TATUM_API_KEY) return res.status(400).json({ success: false, error: 'Tatum API Key not configured' });
+  try {
+    await waitForRateLimit();
+    const response = await fetch('https://api.tatum.io/v4/data/storage/uploads', {
+      headers: { 'x-api-key': TATUM_API_KEY }
+    });
+    const data = await response.json();
+    res.json({ success: response.ok, uploads: data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Tatum Walrus Storage API: Get upload job status (/v4/data/storage/upload/:jobId)
+app.get('/api/tatum/walrus-status/:jobId', async (req, res) => {
+  if (!TATUM_API_KEY) return res.status(400).json({ success: false, error: 'Tatum API Key not configured' });
+  try {
+    await waitForRateLimit();
+    const response = await fetch(`https://api.tatum.io/v4/data/storage/upload/${req.params.jobId}`, {
+      headers: { 'x-api-key': TATUM_API_KEY }
+    });
+    const data = await response.json();
+    res.json({ success: response.ok, status: data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Tatum Walrus Storage API: Upload file or payload directly
+app.post('/api/tatum/walrus-upload', async (req, res) => {
+  const { payload, filename } = req.body;
+  if (!payload) return res.status(400).json({ error: 'Payload required' });
+  try {
+    const jsonStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const result = await uploadToTatumWalrus(jsonStr, filename || `walrus-${Date.now()}.json`);
+    if (!result) return res.status(500).json({ success: false, error: 'Tatum Walrus upload failed' });
+    res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -694,7 +851,7 @@ app.post('/api/agent/chat', async (req, res) => {
 
 // Start Server
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
   console.log(`GoalStar Total Recall Edition running at:`);
   console.log(`   http://localhost:${PORT}`);
