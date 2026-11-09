@@ -1,3 +1,4 @@
+import { walrusMemory } from './walrus-memory.js';
 // Floating planning-agent chat.
 //
 // The panel is injected by this module so the app markup stays unchanged. It
@@ -117,9 +118,9 @@ export function initAgentChat({ getContext, applyOps, onEdit } = {}) {
     sendBtn.textContent = 'Thinking…';
 
     try {
-      const res = await fetch('/api/agent/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...walrusMemory.identityHeaders() },
         body: JSON.stringify({ message, board: ctx }),
       });
       const data = await res.json().catch(() => ({}));

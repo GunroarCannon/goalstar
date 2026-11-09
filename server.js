@@ -6,6 +6,9 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { MemWal } from '@mysten-incubation/memwal';
+import * as tatum from './lib/tatum.js';
+import { buildCertificate, verifyCertificate, storageEvent, CERTIFICATE_VERSION } from './lib/certificate.js';
+import { frictionForSteps, forgetCachedFriction } from './lib/friction.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +40,8 @@ const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.resolve(_
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
 const LOG_FILE = path.join(DATA_DIR, 'memory-log.jsonl');
 
+const NAMESPACE = process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
+
 let memwalClient = null;
 const stats = { written: 0, failed: 0, recalls: 0, recallMs: 0 };
 const pendingQueue = new Map(); // ns -> [{ text, at }]
@@ -49,7 +54,7 @@ function getMemwal() {
         key: process.env.MEMWAL_PRIVATE_KEY,
         accountId: process.env.MEMWAL_ACCOUNT_ID,
         serverUrl: process.env.MEMWAL_SERVER_URL || 'https://relayer.memory.walrus.xyz',
-        namespace: process.env.MEMWAL_NAMESPACE || 'goalstar-workflows',
+        namespace: NAMESPACE,
       });
       console.log('[OK] Walrus Memory connected on Mainnet. Account:', process.env.MEMWAL_ACCOUNT_ID.slice(0, 10) + '...');
     } catch (err) {
@@ -76,119 +81,6 @@ const TEMPLATE_FILE = path.join(DATA_DIR, 'templates.json');
 const WALRUS_PUBLISHER = process.env.WALRUS_PUBLISHER_URL || '';
 const WALRUS_AGGREGATOR = process.env.WALRUS_AGGREGATOR_URL || 'https://aggregator.walrus.space';
 
-// ---- Tatum Sui RPC Gateway & Native Walrus Storage Client ----
-const TATUM_RPC_URL = process.env.TATUM_SUI_RPC_URL || 'https://api.tatum.io/v3/blockchain/node/sui-mainnet';
-const TATUM_API_KEY = process.env.TATUM_API_KEY || '';
-
-// Rate limiter: Max 3 requests/sec sliding window for Tatum Free Plan
-const RATE_LIMIT_RPS = 3;
-let requestTimestamps = [];
-
-async function waitForRateLimit() {
-  const now = Date.now();
-  requestTimestamps = requestTimestamps.filter(t => now - t < 1000);
-  if (requestTimestamps.length >= RATE_LIMIT_RPS) {
-    const oldest = requestTimestamps[0];
-    const delay = 1000 - (now - oldest) + 50;
-    await new Promise(resolve => setTimeout(resolve, delay));
-    return waitForRateLimit();
-  }
-  requestTimestamps.push(Date.now());
-}
-
-// In-memory 15-second cache to prevent burning Tatum 3 req/sec quota
-const rpcCache = new Map();
-const CACHE_TTL_MS = 15000;
-
-async function callSuiRpc(method, params = []) {
-  const cacheKey = `${method}:${JSON.stringify(params)}`;
-  const cached = rpcCache.get(cacheKey);
-  const now = Date.now();
-  if (cached && now - cached.at < CACHE_TTL_MS) {
-    return cached.data;
-  }
-
-  await waitForRateLimit();
-
-  const headers = { 'Content-Type': 'application/json' };
-  if (TATUM_API_KEY) {
-    headers['x-api-key'] = TATUM_API_KEY;
-  }
-  
-  const payload = {
-    jsonrpc: '2.0',
-    id: Date.now(),
-    method,
-    params,
-  };
-
-  try {
-    const res = await fetch(TATUM_RPC_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json();
-    if (json.statusCode === 404 || json.error) {
-      const fb = await fetch('https://fullnode.mainnet.sui.io:443', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const fbJson = await fb.json();
-      const fbResult = fbJson.result ?? fbJson;
-      rpcCache.set(cacheKey, { data: fbResult, at: now });
-      return fbResult;
-    }
-    const result = json.result ?? json;
-    rpcCache.set(cacheKey, { data: result, at: now });
-    return result;
-  } catch (err) {
-    try {
-      const fb = await fetch('https://fullnode.mainnet.sui.io:443', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const fbJson = await fb.json();
-      const fbResult = fbJson.result ?? fbJson;
-      rpcCache.set(cacheKey, { data: fbResult, at: now });
-      return fbResult;
-    } catch (fbErr) {
-      console.warn(`[Tatum Sui RPC] Error on ${method}:`, err.message);
-      throw err;
-    }
-  }
-}
-
-// Upload file directly to Walrus using Tatum's native Storage API (/v4/data/storage/upload)
-async function uploadToTatumWalrus(jsonString, filename = 'milestone.json') {
-  if (!TATUM_API_KEY) return null;
-  try {
-    await waitForRateLimit();
-    const form = new FormData();
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    form.append('file', blob, filename);
-
-    const res = await fetch('https://api.tatum.io/v4/data/storage/upload', {
-      method: 'POST',
-      headers: { 'x-api-key': TATUM_API_KEY },
-      body: form,
-    });
-    if (res.ok) {
-      const data = await res.json();
-      console.log(`[Tatum Walrus Storage] Uploaded ${filename}:`, data.jobId, data.blobId);
-      return data;
-    } else {
-      const err = await res.text();
-      console.warn('[Tatum Walrus Storage] Upload failed:', res.status, err);
-    }
-  } catch (e) {
-    console.warn('[Tatum Walrus Storage] Error:', e.message);
-  }
-  return null;
-}
-
 const readJsonFile = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
 const writeJsonFile = (f, v) => fs.writeFileSync(f, JSON.stringify(v));
 const blobIndex = () => readJsonFile(BLOB_INDEX, {});
@@ -196,7 +88,7 @@ const blobIndex = () => readJsonFile(BLOB_INDEX, {});
 async function publishBlob(payload, { kind = 'board', namespace = null, label = '' } = {}) {
   const json = JSON.stringify(payload);
   const id = crypto.createHash('sha256').update(json).digest('hex').slice(0, 32);
-  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
+  const ns = namespace || NAMESPACE;
   const idx = blobIndex();
   if (!idx[id]) {
     idx[id] = { id, kind, label, namespace: ns, at: new Date().toISOString(), bytes: json.length, storage: 'local' };
@@ -207,24 +99,16 @@ async function publishBlob(payload, { kind = 'board', namespace = null, label = 
 
   let storage = idx[id].storage || 'local';
 
-  // Primary: Native Walrus Storage via Tatum Storage API (/v4/data/storage/upload)
-  if (TATUM_API_KEY) {
+  // Primary: Walrus storage through Tatum. Uploads certify asynchronously, so a
+  // job id is the success signal; the blob id appears once the job completes.
+  if (tatum.isConfigured() && !idx[id].tatumJobId) {
     try {
-      const tatumUpload = await uploadToTatumWalrus(json, `${kind}-${id.slice(0, 8)}.json`);
-      if (tatumUpload && tatumUpload.blobId) {
-        idx[id] = {
-          ...idx[id],
-          storage: 'walrus_tatum',
-          tatumJobId: tatumUpload.jobId,
-          blobId: tatumUpload.blobId,
-          walrusStatus: tatumUpload.status || 'PENDING',
-          downloadUrl: `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${tatumUpload.blobId}`
-        };
-        writeJsonFile(BLOB_INDEX, idx);
-        storage = 'walrus_tatum';
-      }
+      const job = await tatum.uploadJson(json, `${kind}-${id.slice(0, 8)}.json`);
+      idx[id] = { ...idx[id], storage: 'walrus_tatum', tatumJobId: job.jobId, blobId: job.blobId || null };
+      writeJsonFile(BLOB_INDEX, idx);
+      storage = 'walrus_tatum';
     } catch (e) {
-      console.warn('[Tatum Walrus Storage] publish failed:', e.message);
+      console.warn('[Tatum storage] upload failed:', e.message);
     }
   }
 
@@ -278,25 +162,28 @@ async function readBlob(id) {
   if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
 
   const meta = blobIndex()[id];
-  if (meta?.blobId) {
-    const aggregators = [
-      'https://aggregator.walrus-mainnet.walrus.space',
-      WALRUS_AGGREGATOR,
-      'https://aggregator.walrus.space'
-    ];
-    for (const agg of aggregators) {
-      if (!agg) continue;
-      try {
-        const r = await fetch(`${agg}/v1/blobs/${meta.blobId}`);
+  // Tatum stores files as Walrus quilts, so read the individual file by patch id.
+  if (meta?.tatumJobId) {
+    try {
+      const job = await tatum.getUpload(meta.tatumJobId);
+      if (job.downloadUrlByQuiltPatchId) {
+        const r = await fetch(job.downloadUrlByQuiltPatchId);
         if (r.ok) return await r.json();
-      } catch { /* fall through */ }
-    }
+      }
+    } catch { /* fall through to the memory mirror */ }
+  }
+
+  if (meta?.blobId && meta.storage === 'walrus_blob') {
+    try {
+      const r = await fetch(`${WALRUS_AGGREGATOR}/v1/blobs/${meta.blobId}`);
+      if (r.ok) return await r.json();
+    } catch { /* fall through to the memory mirror */ }
   }
 
   const mw = getMemwal();
   if (mw) {
     try {
-      const resp = await mw.recall({ query: `BLOB ${id}`, limit: 8, namespace: meta?.namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows' });
+      const resp = await mw.recall({ query: `BLOB ${id}`, limit: 8, namespace: meta?.namespace || NAMESPACE });
       for (const item of resp.results || []) {
         const text = String(item.text || '');
         const at = text.indexOf(`[BLOB ${id}]`);
@@ -326,11 +213,11 @@ app.get('/api/health', async (req, res) => {
     }
   }
 
-  let suiCheckpoint = null;
+  let sui = null;
   try {
-    suiCheckpoint = await callSuiRpc('sui_getLatestCheckpointSequenceNumber');
+    sui = { live: true, ...(await tatum.getChainHead()) };
   } catch (e) {
-    suiCheckpoint = 'gateway ready (key configured)';
+    sui = { live: false, error: e.message };
   }
 
   res.json({
@@ -340,17 +227,13 @@ app.get('/api/health', async (req, res) => {
       enabled: !!mw,
       status: mwStatus,
       accountId: process.env.MEMWAL_ACCOUNT_ID ? `${process.env.MEMWAL_ACCOUNT_ID.slice(0, 10)}...` : null,
-      namespace: process.env.MEMWAL_NAMESPACE || 'goalstar-workflows',
+      namespace: NAMESPACE,
     },
     tatum: {
-      gateway: TATUM_RPC_URL,
-      keyConfigured: !!TATUM_API_KEY,
-      latestCheckpoint: suiCheckpoint,
-      rateLimitRps: RATE_LIMIT_RPS,
-      walrusStorage: {
-        configured: !!TATUM_API_KEY,
-        endpoint: 'https://api.tatum.io/v4/data/storage/upload'
-      }
+      gateway: tatum.GRPC_HOST,
+      keyConfigured: tatum.isConfigured(),
+      sui,
+      rateLimitRps: tatum.RATE_LIMIT_RPS,
     },
   });
 });
@@ -361,7 +244,7 @@ app.get('/api/config', (req, res) => {
     groq: { configured: !!process.env.GROQ_API_KEY, model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b', viaServer: true },
     walrus: {
       configured: !!(process.env.MEMWAL_ACCOUNT_ID && process.env.MEMWAL_PRIVATE_KEY),
-      namespace: process.env.MEMWAL_NAMESPACE || 'goalstar-workflows',
+      namespace: NAMESPACE,
       publisher: !!WALRUS_PUBLISHER,
     },
     tatum: {
@@ -389,24 +272,55 @@ app.post('/api/llm/groq', async (req, res) => {
   }
 });
 
+// Every person gets a private namespace derived from a secret memory ID. The server
+// derives it, and never accepts a namespace from a request: this Walrus account holds
+// other projects too. With no ID, requests can only read the project's sample memory.
+const MEMORY_ID = /^[A-Za-z0-9_-]{24,128}$/;
+
+app.use(['/api/memory', '/api/agent'], (req, res, next) => {
+  const id = req.get('x-goalstar-memory');
+  if (id && !MEMORY_ID.test(id)) return res.status(400).json({ error: 'Invalid memory ID' });
+  req.personalNamespace = id ? `goalstar-u-${crypto.createHash('sha256').update(id).digest('hex').slice(0, 32)}` : null;
+  next();
+});
+
+// The relayer's own counts, which unlike a recall are exact.
+let countCache = { at: 0, map: null };
+async function namespaceCounts(mw) {
+  if (Date.now() - countCache.at < 10000) return countCache.map;
+  try {
+    const { namespaces } = await mw.listNamespaces();
+    countCache = { at: Date.now(), map: new Map(namespaces.map((n) => [n.name, n.memory_count])) };
+    return countCache.map;
+  } catch (err) {
+    console.warn('[Walrus] Count failed:', err.message);
+    return null;
+  }
+}
+
 // Memory Stats & Telemetry
-app.get('/api/memory/stats', (req, res) => {
+app.get('/api/memory/stats', async (req, res) => {
   const mw = getMemwal();
+  const counts = mw ? await namespaceCounts(mw) : null;
+  const ns = req.personalNamespace || NAMESPACE;
   res.json({
     ...stats,
     avgRecallMs: stats.recalls ? Math.round(stats.recallMs / stats.recalls) : 0,
     enabled: !!mw,
+    memoryCount: counts ? counts.get(ns) ?? 0 : null,
+    sampleCount: counts ? counts.get(NAMESPACE) ?? 0 : null,
     accountId: process.env.MEMWAL_ACCOUNT_ID || null,
-    namespace: process.env.MEMWAL_NAMESPACE || 'goalstar-workflows',
+    namespace: ns,
   });
 });
 
 // Write Memory (Single)
 app.post('/api/memory/remember', async (req, res) => {
-  const { text, namespace, friction, category } = req.body || {};
+  const { text, friction, category } = req.body || {};
   if (!text) return res.status(400).json({ error: 'Text required' });
+  if (!req.personalNamespace) return res.status(401).json({ error: 'A memory ID is required to write memories' });
 
-  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-recall-app';
+  const ns = req.personalNamespace;
   recordPending(ns, text);
 
   const entry = {
@@ -427,6 +341,8 @@ app.post('/api/memory/remember', async (req, res) => {
   try {
     const job = await mw.remember(text, ns);
     stats.written++;
+    forgetCachedFriction();
+    countCache.at = 0;
     res.json({ success: true, mode: 'walrus_mainnet', job, text, ns });
   } catch (err) {
     stats.failed++;
@@ -437,20 +353,23 @@ app.post('/api/memory/remember', async (req, res) => {
 
 // Recall Memories
 app.post('/api/memory/recall', async (req, res) => {
-  const { query = 'workflow blockers and habits', namespace, limit = 12 } = req.body || {};
-  const ns = namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-recall-app';
+  const { query = 'workflow blockers and habits' } = req.body || {};
+  const limit = Math.min(Math.max(Number(req.body?.limit) || 12, 1), 100);
+  const ns = req.personalNamespace || NAMESPACE;
   const mw = getMemwal();
 
   let results = [];
   const start = Date.now();
 
-  if (mw) {
+  const counts = mw ? await namespaceCounts(mw) : null;
+  if (mw && (!counts || counts.get(ns) > 0)) {
     try {
-      const resp = await mw.recall({ query, limit, namespace: ns });
+      const resp = await mw.recall({ query: String(query).slice(0, 500), limit, namespace: ns });
       results = (resp.results || []).map(item => ({
         text: item.text,
         distance: item.distance,
         blob: item.blob_id,
+        at: item.created_at || null,
         source: 'walrus_mainnet',
       }));
     } catch (err) {
@@ -471,55 +390,32 @@ app.post('/api/memory/recall', async (req, res) => {
   res.json({ results, namespace: ns, count: results.length });
 });
 
-// Wipe local memories and reset pending queue
-app.post('/api/memory/wipe', (req, res) => {
-  const ns = req.body?.namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-recall-app';
-  pendingQueue.delete(ns);
-  try {
-    fs.writeFileSync(LOG_FILE, '');
-  } catch (e) {}
-  stats.written = 0;
-  stats.recalls = 0;
-  res.json({ success: true, message: 'Local memory log wiped and pending queue cleared', namespace: ns });
-});
+// What the namespace's memories mean for each step of a route. Each label gets its
+// own semantic recall, so callers send a few labels at a time.
+const FRICTION_BATCH_LIMIT = 12;
 
-// Pre-seed 10 Core Memories (Guarantees Rule #3: At least 10 memories on Mainnet)
-app.post('/api/memory/seed', async (req, res) => {
-  const ns = req.body.namespace || process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
-  const SEED_MEMORIES = [
-    "[WORKFLOW FRICTION] User experiences 3x higher friction on monolithic infrastructure setups; performs significantly faster on modular, serverless routes.",
-    "[HABIT VELOCITY] Micro-checklists (<30 min) achieve a 92% completion rate, whereas unsplit multi-day tasks suffer high procrastination.",
-    "[ENERGY CADENCE] Deep architecture and logic planning peak during morning focus hours (8 AM - 11 AM).",
-    "[STALLED TASK ESCALATION] When a task remains inactive for >48 hours, auto-decomposition into 15-minute sub-steps restores momentum.",
-    "[COMMUNICATION STYLE] Prefers concise, actionable summaries with immediate next actions over verbose status narratives.",
-    "[TOOL CONTINUITY] Cross-tool updates logged from CLI or IDE automatically sync long-term memory across sessions.",
-    "[RISK PROFILE] Prefers battle-tested libraries and low-maintenance deployment options to reduce operational overhead.",
-    "[STAMINA RECOVERY] Splitting complex multi-system integrations across two sessions prevents fatigue-induced regressions.",
-    "[MILESTONE VERIFICATION] Important project deliverables stamped onchain provide verifiable proof-of-completion.",
-    "[PORTABLE CONTEXT] Persistent memory preserves ongoing state and priorities across terminal, browser, and mobile interfaces."
-  ];
+app.post('/api/memory/friction', async (req, res) => {
+  const { labels, fresh, sample } = req.body || {};
+  if (!Array.isArray(labels) || !labels.length || labels.length > FRICTION_BATCH_LIMIT) {
+    return res.status(400).json({ error: `labels must be an array of 1 to ${FRICTION_BATCH_LIMIT} step names` });
+  }
+  const clean = labels.map((l) => String(l).slice(0, 200).trim()).filter(Boolean);
 
   const mw = getMemwal();
-  for (const text of SEED_MEMORIES) {
-    recordPending(ns, text);
-    fs.appendFileSync(LOG_FILE, JSON.stringify({ at: new Date().toISOString(), ns, text, seeded: true }) + '\n');
-  }
+  if (!mw) return res.status(503).json({ error: 'Walrus Memory is not configured' });
 
-  if (mw) {
-    try {
-      await mw.rememberBulk(SEED_MEMORIES.map(text => ({ text, namespace: ns })));
-      stats.written += SEED_MEMORIES.length;
-      return res.json({ success: true, count: SEED_MEMORIES.length, mode: 'walrus_mainnet_bulk', namespace: ns });
-    } catch (err) {
-      console.warn('[Walrus] Seed bulk failed, queuing individually:', err.message);
-      for (const t of SEED_MEMORIES) {
-        mw.remember(t, ns).then(() => stats.written++).catch(() => stats.failed++);
-      }
-      return res.json({ success: true, count: SEED_MEMORIES.length, mode: 'walrus_individual_fallback', namespace: ns });
-    }
+  try {
+    // Personal goals use only your memories. The sample goal also borrows the project's,
+    // so a first-time visitor can see memory change a route.
+    const scopes = [req.personalNamespace, (sample || !req.personalNamespace) && NAMESPACE].filter(Boolean);
+    const counts = await namespaceCounts(mw);
+    const expected = counts ? (ns) => counts.get(ns) ?? 0 : null;
+    const steps = await frictionForSteps(mw, clean, scopes, { fresh: !!fresh, expected, sampleNamespace: NAMESPACE });
+    res.json({ steps, namespaces: scopes });
+  } catch (err) {
+    console.warn('[Walrus] Friction lookup failed:', err.message);
+    res.status(502).json({ error: err.message });
   }
-
-  res.json({ success: true, count: SEED_MEMORIES.length, mode: 'local_pending' });
 });
 
 // ==========================================
@@ -582,74 +478,60 @@ app.post('/api/walrus/templates', async (req, res) => {
   }
 });
 
-// Tatum Sui RPC: Query Onchain State
+// ==========================================
+//      TATUM: LIVE SUI DATA & CERTIFICATES
+// ==========================================
+
+const VALID_JOB_ID = /^[\w-]{8,64}$/;
+
 app.get('/api/tatum/sui-status', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!tatum.isConfigured()) return res.status(503).json({ live: false, error: 'TATUM_API_KEY is not set' });
   try {
-    const checkpoint = await callSuiRpc('sui_getLatestCheckpointSequenceNumber');
-    res.json({
-      success: true,
-      checkpoint: checkpoint?.result ?? checkpoint,
-      gateway: TATUM_RPC_URL,
-      tatumPowered: true,
-      rateLimitRps: RATE_LIMIT_RPS,
-    });
+    const head = await tatum.getChainHead();
+    res.json({ live: true, ...head, gateway: tatum.GRPC_HOST, rateLimitRps: tatum.RATE_LIMIT_RPS });
   } catch (err) {
-    res.json({
-      success: true,
-      checkpoint: "64,129,830",
-      gateway: TATUM_RPC_URL,
-      simulated: true,
-      rateLimitRps: RATE_LIMIT_RPS,
-      note: "Tatum Mainnet Gateway Active with 3 req/sec rate limit"
-    });
+    res.status(502).json({ live: false, error: err.message });
   }
 });
 
-// Tatum Sui RPC: Stamp / Verify Milestone
+// Seal a milestone: anchor it to a live checkpoint, then store it on Walrus.
 app.post('/api/tatum/stamp-milestone', async (req, res) => {
-  const { milestoneId, milestoneLabel, checklist, goal, deliverables } = req.body;
+  const { milestoneId, milestoneLabel, checklist, goal, deliverables } = req.body || {};
   if (!milestoneLabel) return res.status(400).json({ error: 'Milestone label required' });
 
+  let certificate;
   try {
-    let checkpoint = '64129830';
-    try {
-      const cp = await callSuiRpc('sui_getLatestCheckpointSequenceNumber');
-      const raw = cp?.result ?? cp;
-      if (typeof raw === 'string' || typeof raw === 'number') checkpoint = String(raw);
-      else if (typeof raw?.checkpoint === 'string') checkpoint = raw.checkpoint;
-    } catch (e) {}
+    certificate = await buildCertificate({ milestoneId, milestoneLabel, goal, checklist, deliverables });
+  } catch (err) {
+    return res.status(502).json({ success: false, error: `Could not read a live checkpoint from Tatum: ${err.message}` });
+  }
 
-    // Bundle the deliverable itself into a Walrus blob, then anchor that blob id
-    // in the proof digest. The certificate is the blob; the stamp points to it.
-    const certificate = {
-      kind: 'certificate',
-      milestoneId,
-      milestoneLabel,
-      goal: goal || '',
-      completedAt: new Date().toISOString(),
-      checkpoint,
-      checklist: Array.isArray(checklist) ? checklist.slice(0, 40) : [],
-      deliverables: deliverables || '',
-    };
-    const blob = await publishBlob(certificate, { kind: 'certificate', label: String(milestoneLabel).slice(0, 80) });
-    const digest = Buffer.from(`${milestoneLabel}:${blob.id}:${checkpoint}:${Date.now()}`).toString('hex');
-
+  try {
+    const blob = await publishBlob(certificate, { kind: 'certificate', label: certificate.milestoneLabel });
+    if (!blob.tatumJobId) {
+      return res.status(502).json({ success: false, error: 'Tatum storage did not accept the certificate' });
+    }
+    const { chainAnchor: anchor } = certificate;
     res.json({
       success: true,
       milestoneId,
-      milestoneLabel,
+      milestoneLabel: certificate.milestoneLabel,
       onchainProof: {
-        network: 'Sui Mainnet (Tatum Gateway)',
-        checkpoint: checkpoint,
-        proofDigest: '0x' + digest.slice(0, 40),
-        walrusBlobId: blob.blobId || blob.id,
-        tatumJobId: blob.tatumJobId || null,
-        walrusStorage: blob.storage,
+        certVersion: CERTIFICATE_VERSION,
+        network: 'Sui Mainnet',
+        via: 'tatum-grpc',
+        checkpoint: anchor.checkpoint,
+        checkpointDigest: anchor.digest,
+        checkpointTimestampMs: anchor.timestampMs,
+        epoch: anchor.epoch,
+        sha256: certificate.sha256,
+        tatumJobId: blob.tatumJobId,
+        status: 'sealing',
         certificateUrl: blob.url,
-        tatumWalrusUrl: blob.blobId ? `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${blob.blobId}` : null,
-        shareLink: `/index.html?cert=walrus://${blob.blobId || blob.id}`,
-        timestamp: new Date().toISOString(),
-        verified: true,
+        verifyUrl: `/api/tatum/verify/${blob.tatumJobId}`,
+        shareLink: `/index.html?cert=tatum://${blob.tatumJobId}`,
+        timestamp: certificate.completedAt,
       },
     });
   } catch (err) {
@@ -657,47 +539,57 @@ app.post('/api/tatum/stamp-milestone', async (req, res) => {
   }
 });
 
-// Tatum Walrus Storage API: List all uploads (/v4/data/storage/uploads)
+// Independently re-check a certificate against Walrus and Sui. A verified result
+// cannot change, so it is reused rather than spending the rate limit again.
+const verifiedReports = new Map();
+app.get('/api/tatum/verify/:jobId', async (req, res) => {
+  const { jobId } = req.params;
+  if (!VALID_JOB_ID.test(jobId)) return res.status(400).json({ error: 'Invalid job id' });
+  if (verifiedReports.has(jobId)) return res.json(verifiedReports.get(jobId));
+  try {
+    const report = await verifyCertificate(jobId);
+    if (report.verdict === 'verified') verifiedReports.set(jobId, report);
+    res.json(report);
+  } catch (err) {
+    res.status(502).json({ verdict: 'incomplete', jobId, checks: [], error: err.message });
+  }
+});
+
+// Certified milestones, newest first, so anyone can pick one and verify it.
+app.get('/api/tatum/certificates', async (req, res) => {
+  try {
+    const uploads = await tatum.listUploads();
+    const certificates = uploads
+      .filter((u) => u.status === 'CERTIFIED' && String(u.filename).startsWith('certificate-'))
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 20)
+      .map((u) => ({
+        jobId: u.jobId,
+        blobId: u.blobId,
+        suiObjectId: u.suiObjectId,
+        certifiedTxDigest: storageEvent(u, 'certified')?.txDigest || null,
+        createdAt: u.createdAt,
+      }));
+    res.json({ success: true, count: certificates.length, certificates });
+  } catch (err) {
+    res.status(502).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/tatum/walrus-uploads', async (req, res) => {
-  if (!TATUM_API_KEY) return res.status(400).json({ success: false, error: 'Tatum API Key not configured' });
   try {
-    await waitForRateLimit();
-    const response = await fetch('https://api.tatum.io/v4/data/storage/uploads', {
-      headers: { 'x-api-key': TATUM_API_KEY }
-    });
-    const data = await response.json();
-    res.json({ success: response.ok, uploads: data });
+    res.json({ success: true, uploads: await tatum.listUploads() });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(502).json({ success: false, error: err.message });
   }
 });
 
-// Tatum Walrus Storage API: Get upload job status (/v4/data/storage/upload/:jobId)
 app.get('/api/tatum/walrus-status/:jobId', async (req, res) => {
-  if (!TATUM_API_KEY) return res.status(400).json({ success: false, error: 'Tatum API Key not configured' });
+  if (!VALID_JOB_ID.test(req.params.jobId)) return res.status(400).json({ error: 'Invalid job id' });
   try {
-    await waitForRateLimit();
-    const response = await fetch(`https://api.tatum.io/v4/data/storage/upload/${req.params.jobId}`, {
-      headers: { 'x-api-key': TATUM_API_KEY }
-    });
-    const data = await response.json();
-    res.json({ success: response.ok, status: data });
+    res.json({ success: true, status: await tatum.getUpload(req.params.jobId) });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Tatum Walrus Storage API: Upload file or payload directly
-app.post('/api/tatum/walrus-upload', async (req, res) => {
-  const { payload, filename } = req.body;
-  if (!payload) return res.status(400).json({ error: 'Payload required' });
-  try {
-    const jsonStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    const result = await uploadToTatumWalrus(jsonStr, filename || `walrus-${Date.now()}.json`);
-    if (!result) return res.status(500).json({ success: false, error: 'Tatum Walrus upload failed' });
-    res.json({ success: true, ...result });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(502).json({ success: false, error: err.message });
   }
 });
 
@@ -770,7 +662,7 @@ app.post('/api/agent/chat', async (req, res) => {
   // Actively recall from Walrus Decentralized Memory
   let walrusInsights = [];
   const mw = getMemwal();
-  const ns = process.env.MEMWAL_NAMESPACE || 'goalstar-workflows';
+  const ns = req.personalNamespace || NAMESPACE;
   if (mw) {
     try {
       const resp = await mw.recall({ query: `${text} ${board.goal?.label || ''}`, limit: 5, namespace: ns });
@@ -783,9 +675,9 @@ app.post('/api/agent/chat', async (req, res) => {
     try {
       if (fs.existsSync(LOG_FILE)) {
         const lines = fs.readFileSync(LOG_FILE, 'utf8').trim().split('\n').filter(Boolean);
-        walrusInsights = lines.slice(-4).map(l => {
-          try { return JSON.parse(l).text; } catch { return null; }
-        }).filter(Boolean);
+        walrusInsights = lines.map(l => {
+          try { return JSON.parse(l); } catch { return null; }
+        }).filter(l => l?.ns === ns).slice(-4).map(l => l.text);
       }
     } catch (e) {}
   }
@@ -856,8 +748,8 @@ if (!process.env.VERCEL) {
   console.log(`GoalStar Total Recall Edition running at:`);
   console.log(`   http://localhost:${PORT}`);
   console.log(`   Walrus Mainnet Memory: Active`);
-  console.log(`   Tatum Sui RPC Gateway: ${TATUM_RPC_URL}`);
-  console.log(`   Rate Limiting: ${RATE_LIMIT_RPS} requests/sec (Tatum Free Tier)`);
+  console.log(`   Tatum Sui gRPC Gateway: ${tatum.GRPC_HOST}`);
+  console.log(`   Rate Limiting: ${tatum.RATE_LIMIT_RPS} requests/sec (Tatum Free Tier)`);
   console.log(`======================================================\n`);
   getMemwal();
 });

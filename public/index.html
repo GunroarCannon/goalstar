@@ -15,7 +15,7 @@
   </script>
   <script>
     // Default to /home if not logged in
-    if (!localStorage.getItem('goalstar_user')) {
+    if (!localStorage.getItem('goalstar_user') && !/[?&](cert|board)=/.test(location.search)) {
       window.location.replace('/home');
     }
   </script>
@@ -199,7 +199,7 @@
           <span class="lbl">Walrus Memory:</span>
           <span id="walrusCountBadge" class="val">Connecting...</span>
         </div>
-        <div class="telemetry-pill" title="Sui Mainnet Node connected via Tatum RPC Gateway with 3 req/sec rate protection">
+        <div class="telemetry-pill" title="Latest Sui Mainnet checkpoint, read through Tatum's gRPC gateway">
           <span class="indicator live"></span>
           <span class="lbl">Tatum Sui RPC:</span>
           <span id="tatumRpcBadge" class="val">Connecting...</span>
@@ -215,6 +215,7 @@
           <span class="val">Auto-decompose &gt;48h</span>
         </div>
         <div id="walrusRecallLine" class="walrus-recall-line">Reading Walrus memory…</div>
+        <button id="copyMemoryIdBtn" class="mini-btn" title="Your private key to this memory. Use it in the CLI or to sign in on another device">Copy my memory ID</button>
       </section>
       <section class="tour-resee-box">
         <button id="sideTourBtn" class="tour-side-btn">Replay Product Tour</button>
@@ -232,6 +233,14 @@
           <div id="tuesdayText" class="tuesday-text"></div>
           <div id="tuesdayRule" class="tuesday-sub"></div>
         </div>
+      </div>
+      <div id="stallBanner" class="tuesday-banner stall-banner" hidden>
+        <div class="tuesday-body">
+          <span class="tuesday-tag">Watchdog: step stalled</span>
+          <div id="stallText" class="tuesday-text"></div>
+          <div class="tuesday-sub">Saved to your memory, so this step now costs more. Smaller steps usually restart it.</div>
+        </div>
+        <button id="stallBreakBtn" class="mini-btn">Break into small steps</button>
       </div>
       <div id="canvas" class="canvas"></div>
     </div>
@@ -528,7 +537,7 @@
           <div class="opt-info">
             <h4>Walrus Account ID</h4>
             <p>Decentralized memory namespace.</p>
-            <input type="text" id="walrusAccountInput" placeholder="e.g. 0x8a94b2... or alice-dev" />
+            <input type="text" id="walrusAccountInput" placeholder="Paste your memory ID from another device" />
           </div>
           <button id="connectWalrusBtn" class="mini-btn secondary">Sync Memory</button>
         </div>
@@ -654,8 +663,6 @@
     if (settingsDlg) {
       settingsDlg.addEventListener('click', buildAvatarPicker, { once: false });
       const settingsBtn = document.getElementById('settingsBtn');
-      if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
-    }
       if (settingsBtn) settingsBtn.addEventListener('click', () => setTimeout(buildAvatarPicker, 50));
     }
 

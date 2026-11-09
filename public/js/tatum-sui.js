@@ -1,5 +1,8 @@
-// Tatum Sui RPC Frontend Bridge
-// Connects GoalStar UI with Tatum Sui Gateway for onchain milestone verification
+// Browser bridge to the server's Tatum endpoints: live Sui status, sealing a
+// milestone certificate, and watching that certificate become verifiable.
+
+const POLL_INTERVAL_MS = 6000;
+const POLL_LIMIT_MS = 5 * 60 * 1000;
 
 export class TatumSuiBridge {
   constructor(apiBase = '') {
@@ -22,15 +25,12 @@ export class TatumSuiBridge {
   async checkStatus() {
     try {
       const res = await fetch(`${this.apiBase}/api/tatum/sui-status`);
-      if (res.ok) {
-        this.status = await res.json();
-        this.notify();
-        return this.status;
-      }
+      this.status = await res.json();
     } catch (err) {
-      console.warn('Tatum Sui check failed:', err);
+      this.status = { live: false, error: err.message };
     }
-    return null;
+    this.notify();
+    return this.status;
   }
 
   async stampMilestone(milestoneId, milestoneLabel, extra = {}) {
@@ -38,15 +38,36 @@ export class TatumSuiBridge {
       const res = await fetch(`${this.apiBase}/api/tatum/stamp-milestone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ milestoneId, milestoneLabel, ...extra })
+        body: JSON.stringify({ milestoneId, milestoneLabel, ...extra }),
       });
-      if (res.ok) {
-        return await res.json();
-      }
+      return await res.json();
     } catch (err) {
-      console.warn('Milestone stamp failed:', err);
+      return { success: false, error: err.message };
     }
-    return null;
+  }
+
+  async verify(jobId) {
+    const res = await fetch(`${this.apiBase}/api/tatum/verify/${encodeURIComponent(jobId)}`);
+    return res.json();
+  }
+
+  // Walrus certification takes about a minute. Calls onReport with each result
+  // until the certificate settles, keepGoing() turns false, or time runs out.
+  async watchCertificate(jobId, onReport, keepGoing = () => true) {
+    const deadline = Date.now() + POLL_LIMIT_MS;
+    for (;;) {
+      let report;
+      try {
+        report = await this.verify(jobId);
+      } catch (err) {
+        report = { verdict: 'incomplete', jobId, checks: [], error: err.message };
+      }
+      if (!keepGoing()) return report;
+      onReport(report);
+      if (report.verdict !== 'pending' || Date.now() > deadline) return report;
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      if (!keepGoing()) return report;
+    }
   }
 }
 

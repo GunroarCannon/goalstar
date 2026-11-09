@@ -205,7 +205,7 @@ export class SketchTour {
       {
         id: 'sui-inspector',
         title: 'Onchain Sui verification',
-        text: 'Cryptographically stamp deliverables on Sui Mainnet via Tatum RPC for tamper-proof verification.',
+        text: 'Seal a finished milestone as a Walrus certificate anchored to a live Sui checkpoint. Anyone can re-check it against the chain.',
         onEnter: () => {
           if (window.selectFirstStateNode) window.selectFirstStateNode();
           const ins = document.getElementById('inspector');

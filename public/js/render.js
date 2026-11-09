@@ -376,11 +376,11 @@ export class Canvas {
           r.ink.addEventListener('animationend', () => { this.drawing.delete(e.id); r.ink.style.animationDelay = r.label.style.animationDelay = ''; this.drawEdges(); }, { once: true });
         }
       }
-      const c = edgeCost(e, o.weights);
+      const c = edgeCost(e, o.weights, o.frictionFn);
       const done = stepsDone(e);
       r.label.title = `${e.label}${e.note ? '\n\n' + e.note : ''}`;
       r.label.innerHTML = `<div class="el-t">${esc(e.label)}</div>
-        <div class="el-m"><span class="cost" style="--c:${costColor(c)}" title="cost with your weights">${fmt(c)}</span><span class="dur">${esc(durationText(e))}</span>${done ? `<span class="chk"> ${done}</span>` : ''}</div>`;
+        <div class="el-m"><span class="cost" style="--c:${costColor(c)}" title="cost with your weights">${fmt(c)}</span><span class="dur">${esc(durationText(e))}</span>${o.memoryChip ? o.memoryChip(e.label) : ''}${done ? `<span class="chk"> ${done}</span>` : ''}</div>`;
     }
     for (const [id, r] of this.edgeEls) if (!board.edges[id]) { r.hl.remove(); r.ink.remove(); r.label.remove(); this.edgeEls.delete(id); this.drawing.delete(id); }
     for (const [id, r] of this.edgeEls) this.lsizes[id] = { w: r.label.offsetWidth, h: r.label.offsetHeight };

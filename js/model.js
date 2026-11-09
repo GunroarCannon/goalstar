@@ -29,8 +29,10 @@ function deepMerge(def, val) {
   return out;
 }
 
+export const SAMPLE_BOARD_ID = 'b_starter_total_recall';
+
 export function getStarterBoard() {
-  const bId = 'b_starter_total_recall';
+  const bId = SAMPLE_BOARD_ID;
   const startId = 'n_start';
   const s1Id = 'n_arch';
   const s2Id = 'n_devops';
@@ -51,16 +53,16 @@ export function getStarterBoard() {
     nodes: {
       [startId]: { id: startId, kind: 'start', label: 'Now: Prototype Idea Ready', note: 'Ready to build autonomous workflow agent', h: 8.5, x: 80, y: 260, done: true },
       [s1Id]: { id: s1Id, kind: 'state', label: 'Architecture & API Specs Finalized', note: 'Endpoints and schemas defined', h: 6.5, x: 540, y: 260, done: true },
-      [s2Id]: { id: s2Id, kind: 'state', label: 'Kubernetes Cluster & Docker Compose', note: 'Heavy DevOps configuration', h: 5.0, x: 1020, y: 110, done: false },
-      [s3Id]: { id: s3Id, kind: 'state', label: 'Alternative: Deploy to Managed Cloud / PaaS', note: 'Zero-config serverless deployment', h: 3.5, x: 1020, y: 410, done: false },
-      [s4Id]: { id: s4Id, kind: 'state', label: 'Walrus Memory & Sui Proofs Tested', note: '10 memories on Mainnet and Sui verification', h: 2.0, x: 1500, y: 260, done: false },
+      [s2Id]: { id: s2Id, kind: 'state', label: 'Kubernetes Cluster & Docker Compose', note: 'Heavy DevOps configuration', h: 2.5, x: 1020, y: 110, done: false },
+      [s3Id]: { id: s3Id, kind: 'state', label: 'Running on Managed Cloud / PaaS', note: 'Less setup, but a monthly bill', h: 2.5, x: 1020, y: 410, done: false },
+      [s4Id]: { id: s4Id, kind: 'state', label: 'Walrus Memory & Sui Proofs Tested', note: '10 memories on Mainnet and Sui verification', h: 1.0, x: 1500, y: 260, done: false },
       [goalId]: { id: goalId, kind: 'goal', label: 'Production Launch on Mainnet', note: 'Live submission for Total Recall', h: 0, x: 1980, y: 260, done: false },
     },
     edges: {
       'e1': { id: 'e1', from: startId, to: s1Id, label: 'Design system & Walrus data model', cost: { time: 2, money: 0, effort: 3, risk: 1 }, duration: '2 days', steps: [{ text: 'Draft schemas', done: true }] },
-      'e2_devops': { id: 'e2_devops', from: s1Id, to: s2Id, label: 'Setup Docker cluster and k8s config', cost: { time: 5, money: 1, effort: 8, risk: 6 }, duration: '5 days', steps: [{ text: 'Write compose file', done: false }] },
-      'e3_paas': { id: 'e3_paas', from: s1Id, to: s3Id, label: 'Deploy to Managed Cloud / PaaS (Low Friction)', cost: { time: 1, money: 0, effort: 2, risk: 1 }, duration: '1 day', steps: [{ text: 'Connect repo', done: false }] },
-      'e4': { id: 'e4', from: s2Id, to: s4Id, label: 'Wire Walrus client & Sui RPC', cost: { time: 3, money: 0, effort: 4, risk: 2 }, duration: '2 days' },
+      'e2_devops': { id: 'e2_devops', from: s1Id, to: s2Id, label: 'Setup Docker cluster and k8s config', cost: { time: 3, money: 0, effort: 4, risk: 3 }, duration: '4 days', steps: [{ text: 'Write compose file', done: false }] },
+      'e3_paas': { id: 'e3_paas', from: s1Id, to: s3Id, label: 'Deploy to Managed Cloud / PaaS', cost: { time: 2, money: 6, effort: 2, risk: 2 }, duration: '2 days', steps: [{ text: 'Connect repo', done: false }] },
+      'e4': { id: 'e4', from: s2Id, to: s4Id, label: 'Wire Walrus client & Sui RPC', cost: { time: 2, money: 0, effort: 3, risk: 1 }, duration: '2 days' },
       'e5': { id: 'e5', from: s3Id, to: s4Id, label: 'Wire Walrus client & Sui RPC', cost: { time: 2, money: 0, effort: 3, risk: 1 }, duration: '2 days' },
       'e6': { id: 'e6', from: s4Id, to: goalId, label: 'Submit to Hackathon & Share Demo', cost: { time: 1, money: 0, effort: 2, risk: 1 }, duration: '1 day' }
     },

@@ -4,7 +4,7 @@ import { tatumSui } from './tatum-sui.js';
 
 import { WorkflowWatchdog } from './watchdog.js';
 
-import { loadData, saveData, createBoard, applyDream, deleteNode, uid, now, DETAIL_STATES } from './model.js';
+import { loadData, saveData, createBoard, applyDream, deleteNode, uid, now, DETAIL_STATES, SAMPLE_BOARD_ID } from './model.js';
 
 import { astar, edgeCost, nextActions, heuristic, estimateMissingH, timeToDays, fmtDays } from './astar.js';
 
@@ -70,7 +70,29 @@ const data = loadData();
 
 const watchdog = new WorkflowWatchdog(walrusMemory);
 
+walrusMemory.getMemoryId = () => auth.memoryId();
+
 const frictionFn = (lbl) => walrusMemory.getFrictionPenalty(lbl);
+
+const signedCost = (n) => `${n > 0 ? '+' : '−'}${fmt(Math.abs(n))}`;
+
+const clip = (text, max) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
+
+const memoryDate = (at) => (at ? new Date(at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'an earlier session');
+
+function memoryChip(label) {
+  const penalty = frictionFn(label);
+  if (!penalty) return '';
+  const why = walrusMemory.explainFriction(label);
+  return `<span class="mem-chip ${penalty > 0 ? 'up' : 'down'}" title="${why?.sample ? 'Sample memory' : 'Your memory'} on Walrus: ${esc(why?.text || '')}">${signedCost(penalty)} memory</span>`;
+}
+
+function memoryReason(label) {
+  const penalty = frictionFn(label);
+  const why = walrusMemory.explainFriction(label);
+  if (!penalty || !why) return '';
+  return `<div class="mem-reason ${penalty > 0 ? 'up' : 'down'}"><b>${signedCost(penalty)} from ${why.sample ? 'sample' : 'your'} Walrus memory</b> <span>“${esc(clip(why.text, 220))}”</span><small>Stored ${esc(memoryDate(why.at))} · blob ${esc(String(why.blob || '').slice(0, 10))}…</small></div>`;
+}
 
 let sel = null;            // { type: 'node' | 'edge', id }
 
@@ -271,11 +293,17 @@ function refresh({ inspector = true } = {}) {
 
     path: r.found ? { nodes: new Set(r.nodes), edges: new Set(r.edges) } : null,
 
-    g: r.g, sel, weights: w, pulse: pulseId, display: settings().display,
+        g: r.g, sel, weights: w, pulse: pulseId, display: settings().display, frictionFn, memoryChip,
 
   });
 
 
+
+    paintMemoryStory(b, w, r);
+
+  checkStalls(b, r);
+
+  scheduleFrictionSync();
 
   $('#goalTitle').textContent = b.nodes[b.goalId].label;
 
@@ -556,7 +584,7 @@ function renderPath(b, r, w) {
 
   list.innerHTML = r.edges.map((eid) => {
 
-    const e = b.edges[eid], to = b.nodes[e.to], c = edgeCost(e, w), sd = stepsDone(e);
+    const e = b.edges[eid], to = b.nodes[e.to], c = edgeCost(e, w, frictionFn), sd = stepsDone(e);
 
     return `<li data-edge="${eid}" class="${sel?.id === eid ? 'sel' : ''}">
 
@@ -564,7 +592,7 @@ function renderPath(b, r, w) {
 
       <div class="sub">→ ${esc(to.label)}</div>
 
-      <div class="chips"><span class="cost" style="--c:${costColor(c)}">${fmt(c)}</span><span class="chip">${esc(durationText(e))}</span>${sd ? `<span class="chip"> ${sd}</span>` : ''}</div>
+      <div class="chips"><span class="cost" style="--c:${costColor(c)}">${fmt(c)}</span><span class="chip">${esc(durationText(e))}</span>${memoryChip(e.label)}${sd ? `<span class="chip"> ${sd}</span>` : ''}</div>
 
     </li>`;
 
@@ -578,7 +606,7 @@ function renderPath(b, r, w) {
 
 function renderNext(b, w) {
 
-  const items = nextActions(b, w).slice(0, 6);
+  const items = nextActions(b, w, frictionFn).slice(0, 6);
 
   const onPath = new Set(lastPath?.edges || []);
 
@@ -782,15 +810,17 @@ function renderInspector() {
 
         <div style="font-size:11.5px; color:var(--muted); line-height:1.4; margin:5px 0 8px;">
 
-          Verifiable Milestone Proof: Cryptographically anchored to Sui Mainnet via Tatum RPC gateway with immutable verification.
+          Seal this milestone as a Walrus file anchored to a live Sui checkpoint. Anyone can re-check it against the chain.
 
         </div>
 
-        <button class="sui-stamp-btn" data-act="sui-stamp" data-nodeid="${n.id}" style="width:100%;">${n.done ? 'Stamp Verified Milestone on Sui (Tatum)' : 'Stamp Milestone Proof on Sui (Tatum)'}</button>
+        ${n.proof ? '<div data-cert-slot></div>' : `<button class="sui-stamp-btn" data-act="sui-stamp" data-nodeid="${n.id}" style="width:100%;">Seal certificate on Walrus + Sui</button>`}
 
       </div>` : ''}
 
       ${!n.done && n.kind === 'state' ? `<button class="mini-btn" style="width: 100%; margin-top: 10px; background: #6366f1;" data-act="auto-decompose" data-nodeid="${n.id}"> Apply Learned Escalation: Decompose</button>` : ''}`;
+
+    el.querySelector('[data-cert-slot]')?.replaceWith(certificateCard(n, b, n.proof));
 
   } else {
 
@@ -838,7 +868,9 @@ function renderInspector() {
 
       ${slider('risk', 'chance it fails')}
 
-      <div class="muted small">cost with your weights: <b id="edgeCostOut">${fmt(edgeCost(e, w))}</b>${e.by ? ` · dreamed by ${esc(e.by)}` : ''}</div>
+      <div class="muted small">cost with your weights: <b id="edgeCostOut">${fmt(edgeCost(e, w, frictionFn))}</b>${e.by ? ` · dreamed by ${esc(e.by)}` : ''}</div>
+
+      ${memoryReason(e.label)}
 
       <div class="btns">
 
@@ -906,6 +938,8 @@ $('#inspector').addEventListener('input', (ev) => {
 
       if (t.checked) sound.play('pop');
 
+      obj.touchedAt = now();
+
       const toNode = b.nodes[obj.to];
 
       if (toNode) {
@@ -915,6 +949,8 @@ $('#inspector').addEventListener('input', (ev) => {
         if (allDone && !toNode.done) {
 
           toNode.done = true;
+
+          recordOutcome(b, toNode);
 
           canvas.burst(toNode.id, 16);
 
@@ -940,7 +976,7 @@ $('#inspector').addEventListener('input', (ev) => {
 
     t.nextElementSibling.textContent = t.value;
 
-    $('#edgeCostOut').textContent = fmt(edgeCost(obj, settings().weights));
+    $('#edgeCostOut').textContent = fmt(edgeCost(obj, settings().weights, frictionFn));
 
   } else return;
 
@@ -1208,6 +1244,8 @@ function toggleDone(id, value) {
 
   n.done = value ?? !n.done;
 
+  if (n.done) recordOutcome(b, n);
+
   persist();
 
   refresh();
@@ -1270,9 +1308,21 @@ async function dream(req, ctx, label, near) {
 
   try {
 
+    req.memories = await walrusMemory.recallForPlanning(`${req.goal.label} ${req.focus?.node?.label || req.focus?.edge?.label || ''}`.trim());
+
+    if (req.memories.length) toast(`Planning with ${req.memories.length} of your memories`);
+
     const { result, by, warning } = await generate(settings(), req);
 
     const added = applyDream(b, result, { ...ctx, by }) || { nodes: [], edges: [], updated: false };
+
+    for (const added_ of added.nodes || []) {
+
+      const node = b.nodes[typeof added_ === 'string' ? added_ : added_.id];
+
+      if (node) node.created ??= now();
+
+    }
 
     estimateMissingH(b, settings().weights);
 
@@ -2258,13 +2308,168 @@ if (localStorage.getItem('goalstar_tour_clicked') === 'true' || localStorage.get
 
 // ---------- Walrus Memory & Tatum Sui Wiring ----------
 
+const isUserMemory = (m) => !/^\s*\[BLOB /.test(String(m?.text));
+
+function newestMemory(memories) {
+  return memories.filter(isUserMemory).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0] || null;
+}
+
+// What memory is doing to this goal, measured by planning the route both ways.
+function memoryStory(b, w, r) {
+  if (!r.found) return null;
+  const without = astar(b, w);
+  const onRoute = r.edges.map((id) => b.edges[id]);
+  if (without.found && without.edges.join() !== r.edges.join()) {
+    // A step named the same on both routes costs the same on both, so it can't be why the route moved.
+    const beforeRoute = without.edges.map((id) => b.edges[id]);
+    const dropped = beforeRoute.filter((e) => !onRoute.some((o) => o.label === e.label));
+    const added = onRoute.filter((e) => !beforeRoute.some((o) => o.label === e.label));
+    const avoided = [...dropped].sort((x, y) => frictionFn(y.label) - frictionFn(x.label))[0];
+    const taken = added[0];
+    const driver = frictionFn(avoided.label) > 0 ? avoided : [...added].sort((x, y) => frictionFn(x.label) - frictionFn(y.label))[0];
+    const why = walrusMemory.explainFriction(driver.label);
+    if (why) {
+      return {
+        moved: true,
+        tag: 'Memory moved your route',
+        text: `${driver === avoided ? `Avoiding “${avoided.label}” (${signedCost(frictionFn(avoided.label))})` : `Favouring “${taken.label}” (${signedCost(frictionFn(taken.label))})`}. ${why.sample ? 'Sample memory' : 'Remembered'}: “${clip(why.text, 150)}”`,
+        sub: `Without memory the plan was “${avoided.label}”. Now it takes “${taken.label}”. Stored on Walrus Mainnet, ${memoryDate(why.at)}.`,
+      };
+    }
+  }
+  const priced = onRoute.filter((e) => frictionFn(e.label)).sort((x, y) => Math.abs(frictionFn(y.label)) - Math.abs(frictionFn(x.label)))[0];
+  if (priced) {
+    const why = walrusMemory.explainFriction(priced.label);
+    const penalty = frictionFn(priced.label);
+    return {
+      tag: 'Memory re-priced this route',
+      text: `“${priced.label}” ${signedCost(penalty)}. ${why.sample ? 'Sample memory' : 'Remembered'}: “${clip(why.text, 150)}”`,
+      sub: penalty > 0 ? 'Still the cheapest way to the goal, so it stays on the route at the higher cost.' : 'A past win makes this step cheaper.',
+    };
+  }
+  return null;
+}
+
+// Writes what happened to a step into memory, so the planner learns without being told.
+function recordOutcome(b, n) {
+  n.doneAt = now();
+  if (n.outcomeLogged) return;
+  const incoming = Object.values(b.edges).filter((e) => e.to === n.id);
+  const e = incoming.find((x) => lastPath?.edges?.includes(x.id)) || incoming[0];
+  if (!e) return;
+  n.outcomeLogged = true;
+  const from = b.nodes[e.from];
+  const actual = (now() - Math.max(from?.doneAt || 0, n.created || 0, b.created || 0)) / 86400000;
+  const planned = timeToDays(e.cost?.time);
+  const text = actual > planned * 2 && actual > 1
+    ? `Delayed: "${e.label}" took ${fmtDays(actual)} against a plan of ${fmtDays(planned)} before reaching "${n.label}".`
+    : `Completed "${e.label}" and reached "${n.label}" in ${actual < 0.5 ? 'under a day' : fmtDays(actual)}, against a plan of ${fmtDays(planned)}.`;
+  memoryWatchFastUntil = now() + 2 * 60 * 1000;
+  walrusMemory.remember(text.slice(0, 900), 'outcome').then((saved) => {
+    if (saved?.mode === 'walrus_mainnet') log('saved this outcome to your Walrus memory');
+  });
+}
+
+// Flags the step you've gone quiet on, once writes it to memory, and offers to split it.
+function checkStalls(b, r) {
+  const banner = $('#stallBanner');
+  if (!banner) return;
+  const stalled = r.found ? watchdog.evaluateEscalation(b, r.edges) : [];
+  for (const s of stalled) {
+    const e = b.edges[s.edgeId];
+    if (e.stallLogged) continue;
+    e.stallLogged = true;
+    persist();
+    memoryWatchFastUntil = now() + 2 * 60 * 1000;
+    walrusMemory.remember(`Stalled for ${fmtDays(s.ageHours / 24)} with no progress on "${e.label}" before reaching "${b.nodes[e.to].label}".`.slice(0, 900), 'stall');
+  }
+  const top = stalled[0];
+  banner.hidden = !top;
+  if (!top) return;
+  banner.dataset.edge = top.edgeId;
+  $('#stallText').textContent = `No progress on “${top.label}” for ${fmtDays(top.ageHours / 24)}.`;
+}
+
+let lastStoryKey = '';
+
+function paintMemoryStory(b, w, r) {
+  const banner = $('#lastTuesdayBanner');
+  if (!banner) return;
+  const newest = newestMemory(walrusMemory.memories);
+  const story = memoryStory(b, w, r) || (newest && {
+    tag: 'Walrus Memory on Mainnet',
+    text: `Remembered: ${clip(newest.text, 150)}`,
+    sub: 'Nothing remembered so far affects the steps on this goal.',
+  });
+  banner.hidden = !story;
+  if (!story) return;
+  banner.classList.toggle('rerouted', !!story.moved);
+  banner.querySelector('.tuesday-tag').textContent = story.tag;
+  $('#tuesdayText').textContent = story.text;
+  $('#tuesdayRule').textContent = story.sub;
+  const key = story.tag + story.text;
+  if (key !== lastStoryKey) {
+    lastStoryKey = key;
+    banner.classList.remove('memory-pulse');
+    void banner.offsetWidth;
+    banner.classList.add('memory-pulse');
+  }
+}
+
+let frictionKey = '';
+let frictionRun = 0;
+let frictionTimer = null;
+
+function scheduleFrictionSync() {
+  clearTimeout(frictionTimer);
+  frictionTimer = setTimeout(() => syncMemoryFriction(), 400);
+}
+
+async function syncMemoryFriction({ fresh = false } = {}) {
+  const b = board();
+  if (!b) return;
+  const labels = [...new Set(Object.values(b.edges).map((e) => e.label).filter(Boolean))];
+  const key = `${b.id}|${labels.join('\n')}`;
+  if (!fresh && key === frictionKey) return;
+  frictionKey = key;
+  const run = ++frictionRun;
+  const routeBefore = lastPath?.edges?.join() || '';
+  await walrusMemory.loadFriction(labels, {
+    fresh,
+    sample: b.id === SAMPLE_BOARD_ID,
+    onBatch: () => { if (run === frictionRun) refresh({ inspector: false }); },
+  });
+  if (run !== frictionRun) return;
+  if (routeBefore && lastPath?.found && lastPath.edges.join() !== routeBefore) {
+    canvas.scan(lastPath.explored);
+    toast('Walrus memory moved your route', 'ok');
+  }
+}
+
+// New memories can arrive from the CLI or another device, and a fresh write takes a
+// moment to index, so watch the relayer's count and re-price when it moves.
+let memoryWatchFastUntil = 0;
+
+async function watchMemoryCount() {
+  if (!document.hidden) {
+    const before = walrusMemory.stats.memoryCount;
+    await walrusMemory.checkStatus();
+    const after = walrusMemory.stats.memoryCount;
+    if (before != null && after != null && after !== before) {
+      await updateWalrusTelemetry();
+      await syncMemoryFriction({ fresh: true });
+    }
+  }
+  setTimeout(watchMemoryCount, Date.now() < memoryWatchFastUntil ? 5000 : 20000);
+}
+
 async function updateWalrusTelemetry() {
 
   const [stats, memories] = await Promise.all([
 
     walrusMemory.checkStatus(),
 
-    walrusMemory.recall(),
+    walrusMemory.recall('workflow blockers and habits', 40),
 
   ]);
 
@@ -2274,27 +2479,9 @@ async function updateWalrusTelemetry() {
 
     countBadge.textContent = stats.enabled
 
-      ? `Mainnet · ${memories.length} memories`
+      ? `Mainnet · ${stats.memoryCount ?? memories.length} yours`
 
       : `Local pending · ${memories.length}`;
-
-  }
-
-
-
-  const insight = watchdog.generateLastTuesdayInsight();
-
-  const textEl = $('#tuesdayText');
-
-  const ruleEl = $('#tuesdayRule');
-
-  if (textEl && ruleEl) {
-
-    const short = insight.text.length > 150 ? insight.text.slice(0, 149) + '…' : insight.text;
-
-    textEl.textContent = insight.hasInsight ? `Remembered: ${short}` : short;
-
-    ruleEl.textContent = insight.ruleApplied;
 
   }
 
@@ -2306,51 +2493,27 @@ async function updateWalrusTelemetry() {
 
   if (recallLine) {
 
-    const newest = String(memories[0]?.text || '').trim();
+    const newest = String(newestMemory(memories)?.text || '').trim();
 
     const preview = newest.length > 120 ? newest.slice(0, 119) + '…' : newest;
 
     recallLine.innerHTML = memories.length
 
-      ? `<b>Remembered ${memories.length} memor${memories.length === 1 ? 'y' : 'ies'}.</b> Newest: “${esc(preview)}”. Matching steps cost more on the route.`
+      ? `<b>${stats.memoryCount ?? memories.length} memories of yours on Mainnet.</b> Newest: “${esc(preview)}”. Blockers raise the cost of related steps; wins lower it.`
 
-      : 'No memories yet. Log your progress or blockers so GoalStar learns where you usually stall.';
-
-  }
-
-
-
-  const banner = $('#lastTuesdayBanner');
-
-  if (banner) {
-
-    if (memories.length && insight.hasInsight) {
-
-      banner.hidden = false;
-
-      banner.classList.remove('memory-pulse');
-
-      void banner.offsetWidth;
-
-      banner.classList.add('memory-pulse');
-
-      if (!window.__walrusAnnounced) {
-
-        window.__walrusAnnounced = true;
-
-        toast(`Walrus recalled ${memories.length} memories — matching steps cost more`);
-
-      }
-
-    } else {
-
-      banner.hidden = true; // Never show fake or simulated placeholder memory!
-
-    }
+      : `No memories of yours yet. Log a blocker, or finish a step, and GoalStar starts learning. The sample goal borrows ${stats.sampleCount ?? 'the project\'s'} project memories so you can see it work.`;
 
   }
 
 
+
+  if (memories.length && !window.__walrusAnnounced) {
+
+    window.__walrusAnnounced = true;
+
+    toast(`Walrus recalled ${stats.memoryCount ?? memories.length} of your memories`);
+
+  }
 
   refresh({ inspector: false });
 
@@ -2366,15 +2529,7 @@ async function updateTatumTelemetry() {
 
   if (badge) {
 
-    if (sui && sui.checkpoint && typeof sui.checkpoint === 'string' && !sui.checkpoint.includes('Not Found')) {
-
-      badge.textContent = `Sui #${sui.checkpoint}`;
-
-    } else {
-
-      badge.textContent = 'Mainnet Active (Tatum)';
-
-    }
+    badge.textContent = sui?.live ? `Sui #${Number(sui.checkpoint).toLocaleString()}` : 'Tatum unreachable';
 
   }
 
@@ -2398,34 +2553,24 @@ $('#shareBoardBtn')?.addEventListener('click', shareBoard);
 
 $('#templatesBtn')?.addEventListener('click', () => loadTemplates(true));
 
-$('#seedMemoryBtn')?.addEventListener('click', async () => {
+$('#stallBreakBtn')?.addEventListener('click', async () => {
+  const id = $('#stallBanner').dataset.edge;
+  if (busy || !id || !board()?.edges[id]) return;
+  await breakdownEdge(id);
+  refresh();
+});
 
-  const btn = $('#seedMemoryBtn');
+$('#copyMemoryIdBtn')?.addEventListener('click', async () => {
+  const id = auth.memoryId();
+  if (!id) return;
+  await navigator.clipboard.writeText(id);
+  toast('Copied. Use it as GOALSTAR_MEMORY_ID in the CLI, or to sign in on another device', 'ok');
+});
 
-  if (btn) {
-
-    btn.disabled = true;
-
-    btn.textContent = 'Seeding...';
-
-  }
-
-  toast('Writing 10 habit & friction memories to Walrus Mainnet...');
-
-  const res = await walrusMemory.seedTenMemories();
-
-  if (btn) {
-
-    btn.disabled = false;
-
-    btn.textContent = '10 Seeded';
-
-  }
-
-  await updateWalrusTelemetry();
-
-  toast(res ? 'Successfully stored 10 memories on Walrus Mainnet!' : 'Seed queued locally', res ? 'ok' : 'info');
-
+window.addEventListener('goalstar:user', () => {
+  walrusMemory.friction.clear();
+  frictionKey = '';
+  updateWalrusTelemetry();
 });
 
 $('#closeTemplatesBtn')?.addEventListener('click', () => { const box = $('#templatesBox'); if (box) box.hidden = true; });
@@ -2482,9 +2627,11 @@ $('#saveMemoryBtn')?.addEventListener('click', async () => {
 
 
 
-  await updateWalrusTelemetry();
+    await updateWalrusTelemetry();
 
-  toast(saved ? 'Memory saved to Walrus — future routes will re-price around it' : 'Saved locally — it will sync when Walrus is reachable');
+  memoryWatchFastUntil = Date.now() + 2 * 60 * 1000;
+
+  toast(saved?.mode === 'walrus_mainnet' ? 'Saved to Walrus. The route re-prices as soon as it is indexed' : 'Could not reach Walrus, so this was not saved', saved?.mode === 'walrus_mainnet' ? 'ok' : 'err');
 
 });
 
@@ -2524,15 +2671,17 @@ document.addEventListener('click', async (e) => {
 
       persist();
 
-      suiBtn.replaceWith(certificateCard(node, b, res.onchainProof));
+      (suiBtn.closest('.cert-card') || suiBtn).replaceWith(certificateCard(node, b, res.onchainProof));
 
-      toast('Certificate sealed: deliverable on Walrus, stamp on Sui');
+      toast('Certificate sent to Walrus. Verifying it on Sui…');
 
     } else {
 
-      suiBtn.textContent = 'Stamp failed — try again';
+      suiBtn.textContent = 'Could not seal. Try again';
 
       suiBtn.disabled = false;
+
+      toast(res?.error || 'Sealing failed', 'err');
 
     }
 
@@ -2590,43 +2739,108 @@ function rememberNote(obj, text) {
 
 
 
+const shorten = (v, keep = 10) => {
+  const text = String(v || '');
+  return text.length > keep * 2 + 1 ? `${text.slice(0, keep)}…${text.slice(-keep)}` : text || '—';
+};
+
+const VERDICT_TEXT = {
+  pending: 'Waiting for Walrus to certify this on Sui. Usually about a minute.',
+  verified: 'Verified against Walrus and Sui',
+  incomplete: 'Could not finish checking right now. Reopen this to try again.',
+  failed: 'Verification failed',
+};
+
+function paintVerification(root, report) {
+  const verdict = root.querySelector('.cert-verdict');
+  verdict.dataset.verdict = report.verdict;
+  verdict.querySelector('.cert-verdict-text').textContent = VERDICT_TEXT[report.verdict] || report.verdict;
+
+  const when = root.querySelector('.cert-window');
+  if (report.window) {
+    const fmt = (ms) => new Date(ms).toLocaleString();
+    when.textContent = `Sealed between ${fmt(report.window.notBefore)} and ${fmt(report.window.notAfter)}`;
+  }
+
+  root.querySelector('.cert-checks').innerHTML = (report.checks || []).map((c) => `
+    <li data-status="${esc(c.status)}">
+      <span class="cert-check-label">${esc(c.label)}</span>
+      <span class="cert-check-detail">${esc(c.detail || '')}</span>
+      ${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">View on Suiscan</a>` : ''}
+    </li>`).join('');
+}
+
+const VERIFICATION_MARKUP = `
+  <div class="cert-verdict" data-verdict="pending"><span class="cert-verdict-dot"></span><span class="cert-verdict-text">Checking…</span></div>
+  <div class="cert-window"></div>
+  <ol class="cert-checks"></ol>`;
+
+// One poll per certificate, however many times the inspector re-renders.
+const certWatches = new Map();
+
+function followCertificate(card, proof) {
+  const jobId = proof.tatumJobId;
+  let watch = certWatches.get(jobId);
+  if (!watch) {
+    watch = { report: null, painters: new Set() };
+    certWatches.set(jobId, watch);
+    const active = watch;
+    tatumSui.watchCertificate(jobId, (report) => {
+      active.report = report;
+      if (report.verdict !== 'pending' && proof.status !== report.verdict) {
+        proof.status = report.verdict;
+        persist();
+      }
+      active.painters.forEach((paint) => paint(report));
+    }).finally(() => {
+      if (active.report?.verdict !== 'verified') certWatches.delete(jobId);
+    });
+  }
+  const current = watch;
+  const paint = (report) => {
+    if (card.isConnected) paintVerification(card, report);
+    else current.painters.delete(paint);
+  };
+  current.painters.add(paint);
+  if (current.report) paintVerification(card, current.report);
+}
+
 function certificateCard(node, b, proof) {
 
   const el = document.createElement('div');
 
   el.className = 'cert-card';
 
+  if (!proof.certVersion) {
+    el.innerHTML = `
+      <div class="cert-kicker">Needs resealing</div>
+      <h4>${esc(node.label)}</h4>
+      <p class="cert-note">This record was made before certificates could be checked against Sui.</p>
+      <button class="sui-stamp-btn" data-act="sui-stamp" data-nodeid="${esc(node.id)}" style="width:100%;">Seal a verifiable certificate</button>`;
+    return el;
+  }
+
   const steps = Object.values(b.edges).filter((x) => x.to === node.id)
 
     .flatMap((x) => (x.steps || []).filter((s) => s.done).map((s) => s.text));
 
   el.innerHTML = `
-
     <div class="cert-kicker">Certificate · Walrus + Sui</div>
-
     <h4>${esc(node.label)}</h4>
-
     <div class="cert-sub">${esc(b.nodes[b.goalId]?.label || '')} · ${new Date(proof.timestamp || Date.now()).toLocaleDateString()}</div>
-
     ${steps.length ? `<ul class="cert-steps">${steps.slice(0, 6).map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
-
+    ${VERIFICATION_MARKUP}
     <div class="cert-meta">
-
-      <div><span>Walrus blob</span><code>${esc(proof.walrusBlobId || '—')}</code></div>
-
-      <div><span>Sui checkpoint</span><code>#${esc(proof.checkpoint || '—')}</code></div>
-
-      <div><span>Proof digest</span><code>${esc(proof.proofDigest || '—')}</code></div>
-
+      <div><span>Sui checkpoint</span><code>#${esc(Number(proof.checkpoint).toLocaleString())}</code></div>
+      <div><span>Checkpoint digest</span><code title="${esc(proof.checkpointDigest)}">${esc(shorten(proof.checkpointDigest))}</code></div>
+      <div><span>SHA-256</span><code title="${esc(proof.sha256)}">${esc(shorten(proof.sha256))}</code></div>
     </div>
-
     <div class="cert-links">
-
-      ${proof.certificateUrl ? `<a href="${esc(proof.certificateUrl)}" target="_blank" rel="noopener">Open the immutable record</a>` : ''}
-
+      ${proof.verifyUrl ? `<a href="${esc(proof.verifyUrl)}" target="_blank" rel="noopener">Raw verification report</a>` : ''}
       ${proof.shareLink ? `<a href="${esc(proof.shareLink)}" target="_blank" rel="noopener">Share this certificate</a>` : ''}
-
     </div>`;
+
+  followCertificate(el, proof);
 
   return el;
 
@@ -2838,7 +3052,7 @@ function showCertificateBanner(cert, id) {
 
     <button class="cert-close" aria-label="Close">&times;</button>
 
-    <div class="cert-kicker">Verified on Walrus + Sui</div>
+    <div class="cert-kicker">Saved milestone record</div>
 
     <h4>${esc(cert.milestoneLabel || 'Milestone')}</h4>
 
@@ -2848,9 +3062,7 @@ function showCertificateBanner(cert, id) {
 
     <div class="cert-meta">
 
-      <div><span>Walrus blob</span><code>${esc(id)}</code></div>
-
-      <div><span>Sui checkpoint</span><code>#${esc(cert.checkpoint || '—')}</code></div>
+      <div><span>Record id</span><code>${esc(id)}</code></div>
 
     </div>
 
@@ -2864,6 +3076,34 @@ function showCertificateBanner(cert, id) {
 
 
 
+function showSharedCertificate(jobId) {
+  document.getElementById('certFloat')?.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'certFloat';
+  wrap.className = 'cert-float';
+  wrap.innerHTML = `
+    <button class="cert-close" aria-label="Close">&times;</button>
+    <div class="cert-kicker">Shared milestone certificate</div>
+    <h4>Checking this certificate…</h4>
+    <div class="cert-sub"></div>
+    ${VERIFICATION_MARKUP}`;
+  document.body.appendChild(wrap);
+  wrap.querySelector('.cert-close').addEventListener('click', () => wrap.remove());
+
+  tatumSui.watchCertificate(jobId, (report) => {
+    const cert = report.certificate;
+    if (cert) {
+      wrap.querySelector('h4').textContent = cert.milestoneLabel;
+      wrap.querySelector('.cert-sub').textContent = [cert.goal, new Date(cert.completedAt).toLocaleDateString()].filter(Boolean).join(' · ');
+    } else if (report.verdict === 'pending') {
+      wrap.querySelector('h4').textContent = 'Certificate is still being sealed';
+    }
+    paintVerification(wrap, report);
+  }, () => wrap.isConnected);
+}
+
+
+
 async function loadSharedLink() {
 
   const params = new URLSearchParams(location.search);
@@ -2873,6 +3113,10 @@ async function loadSharedLink() {
   const bId = blobId(params.get('board'));
 
   const cId = blobId(params.get('cert'));
+
+  const certParam = params.get('cert');
+
+  if (certParam?.startsWith('tatum://')) showSharedCertificate(certParam.slice('tatum://'.length));
 
   try {
 
@@ -3432,9 +3676,10 @@ if (settings().gist.auto && settings().gist.token && settings().gist.id) syncNow
 
 
 
-updateWalrusTelemetry();
+updateWalrusTelemetry().then(() => setTimeout(watchMemoryCount, 20000));
 
 updateTatumTelemetry();
+setInterval(updateTatumTelemetry, 15000);
 
 loadSharedLink();
 

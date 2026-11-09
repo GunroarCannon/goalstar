@@ -3,6 +3,13 @@
 
 import { sound } from './sound.js';
 
+const MEMORY_ID = /^[A-Za-z0-9_-]{24,128}$/;
+
+function newMemoryId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 export class AuthManager {
   constructor() {
     this.user = this.loadUser();
@@ -27,8 +34,21 @@ export class AuthManager {
     }
   }
 
+  // The private key to this person's memory on Walrus. Paste it into the CLI or
+  // another device to reach the same memory.
+  memoryId() {
+    if (!this.user) return null;
+    if (!this.user.memoryId) {
+      this.user.memoryId = newMemoryId();
+      localStorage.setItem('goalstar_user', JSON.stringify(this.user));
+    }
+    return this.user.memoryId;
+  }
+
   saveUser(user) {
+    if (user && !user.memoryId) user.memoryId = newMemoryId();
     this.user = user;
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('goalstar:user'));
     if (user) {
       localStorage.setItem('goalstar_user', JSON.stringify(user));
     } else {
@@ -165,11 +185,17 @@ export class AuthManager {
 
   connectWalrusId(customId) {
     sound.play('click');
-    const id = (customId || '').trim() || 'walrus-user-' + Math.floor(1000 + Math.random() * 9000);
+    const typed = (customId || '').trim();
+    if (typed && !MEMORY_ID.test(typed)) {
+      if (typeof window.toast === 'function') window.toast('That is not a memory ID. Copy yours from the Walrus panel on your other device.', 'err');
+      return;
+    }
+    const id = typed || newMemoryId();
     const user = {
       type: 'walrus_id',
-      name: id,
+      name: `Memory ${id.slice(0, 6)}`,
       address: id,
+      memoryId: id,
       connectedAt: new Date().toISOString()
     };
     this.saveUser(user);

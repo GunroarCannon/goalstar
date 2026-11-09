@@ -14,7 +14,7 @@ export function edgeCost(e, w, frictionFn = null) {
   }
   const baseCost = ws ? s / ws : 0;
   const friction = frictionFn ? frictionFn(e.label || '') : (e.friction || 0);
-  return baseCost + friction;
+  return Math.max(0, baseCost + friction); // a remembered win can discount a step, never below free
 }
 
 export const isAchieved = (n) => !!n && (n.kind === 'start' || n.done);
@@ -81,12 +81,12 @@ export function astar(board, w, opts = {}) {
 }
 
 // Actions you can take right now: edges leaving an achieved state toward one that isn't.
-export function nextActions(board, w) {
+export function nextActions(board, w, frictionFn = null) {
   const h = heuristic(board);
   return Object.values(board.edges)
     .filter((e) => isAchieved(board.nodes[e.from]) && board.nodes[e.to] && !isAchieved(board.nodes[e.to]))
     .filter((e) => board.nodes[e.to].blocked?.level !== 'impossible')
-    .map((e) => { const c = edgeCost(e, w) * (board.nodes[e.to].blocked?.level === 'expensive' ? 2.5 : 1); return { e, c, f: c + h(e.to) }; })
+    .map((e) => { const c = edgeCost(e, w, frictionFn) * (board.nodes[e.to].blocked?.level === 'expensive' ? 2.5 : 1); return { e, c, f: c + h(e.to) }; })
     .sort((a, b) => a.f - b.f);
 }
 

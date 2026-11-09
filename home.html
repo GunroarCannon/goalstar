@@ -285,9 +285,11 @@
       width: 100%;
       height: 720px;
       pointer-events: none;
-      z-index: 45; /* In front of hero visualizer & cards (10), below masthead (100) */
+      z-index: 9; /* Behind the hero copy and cards (10), so the headline is readable on load */
       overflow: hidden;
       will-change: transform, opacity;
+      -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
     }
 
     .cloud-gate-wing {
@@ -933,6 +935,10 @@
       gap: 14px;
       max-width: 620px;
       margin: 0 0 26px;
+    }
+
+    .hero-cta-row + .hero-explain {
+      margin-top: 24px;
     }
 
     .hero-explain > div {
@@ -3492,7 +3498,7 @@
           <span class="hero-badge-sep">/</span>
           <span class="hero-badge-pill tatum-pill">
             <span class="badge-live-dot"></span>
-            <strong>TATUM RPC</strong> · SUI GATEWAY
+            <strong>SUI</strong> <span data-sui="checkpoint">connecting…</span> · VIA TATUM
           </span>
         </div>
         <h1 class="hero-title">
@@ -3515,29 +3521,29 @@
           </span>
         </h1>
         <p class="hero-desc">
-          <strong>GoalStar maps the path between where you are right now and where you want to be.</strong>
-          Give it your starting point and destination, and it drafts the realistic milestones in between. It estimates what each step costs in time, money, effort, and risk, then highlights the clearest route forward.
+          <strong>Tell GoalStar where you are and where you want to be.</strong>
+          It maps the milestones between, remembers what stalled you before, and routes you around it.
         </p>
-
-        <div class="hero-explain">
-          <div>
-            <span class="he-label">What it is</span>
-            <p>A step-by-step visual map. Every card is an actual milestone you can finish, and every line connects actions in an order that makes sense.</p>
-          </div>
-          <div>
-            <span class="he-label">What it does</span>
-            <p>It runs pathfinding tuned to your daily stamina. When a heavy task risks burnout, it reroutes you through lighter, steady steps so you keep moving.</p>
-          </div>
-          <div>
-            <span class="he-label">Use it for</span>
-            <p>Any goal with more than one route forward: getting a raise, studying overseas, launching a product, getting fit, or meeting someone.</p>
-          </div>
-        </div>
 
         <div class="hero-cta-row">
           <button id="heroLaunchBtn" class="album-btn primary-tape" title="Open the planner and start mapping a goal" style="font-size: 17px; padding: 11px 26px;">Open Interactive Planner</button>
           <a href="#simulator" class="album-btn secondary-tape" title="Drag the stamina slider to watch A* reroute" style="font-size: 15px;">Try A* In Browser</a>
           <button id="heroTourBtn" class="album-btn secondary-tape" title="About GoalStar" style="font-size: 15px;">Info</button>
+        </div>
+
+        <div class="hero-explain">
+          <div>
+            <span class="he-label">What it is</span>
+            <p>A visual map where every card is a milestone you can finish and every line is a step in a sensible order.</p>
+          </div>
+          <div>
+            <span class="he-label">What it does</span>
+            <p>Prices each step in time, money, effort and risk, then picks the route that fits your real stamina.</p>
+          </div>
+          <div>
+            <span class="he-label">Use it for</span>
+            <p>Any goal with more than one way there: a raise, studying abroad, launching a product, getting fit.</p>
+          </div>
         </div>
       </div>
 
@@ -3594,9 +3600,9 @@
     <section id="infrastructure" class="cardboard-showcase-sec">
       <div class="tech-stack-head" style="margin-bottom: 30px;">
         <!--div class="tech-track-badge">TOTAL RECALL HACKATHON · TRACK 02: SMART AGENTS FOR REAL LIFE</div-->
-        <h2 class="tech-stack-title">Core Infrastructure: Walrus Memory &amp; Tatum Sui RPC</h2>
+        <h2 class="tech-stack-title">What it remembers, and how you can prove it</h2>
         <p class="tech-stack-sub">
-          Decentralized portable memory combined with cryptographic onchain verification.</p>
+          Your history lives in Walrus Memory on Mainnet. Finished milestones become certificates anyone can check against Sui.</p>
       </div>
 
       <div class="cardboard-stage-wrap" id="cardboardStage">
@@ -3605,7 +3611,7 @@
           <div class="engraved-label">DECENTRALIZED ARCHITECTURE STACK</div>
           <h2 class="engraved-title">WALRUS ✕ TATUM</h2>
           <div class="engraved-sub">PORTABLE MEMORY ENGINE ⟷ SUI ONCHAIN PROOF GATEWAY</div>
-          <div class="engraved-coords">BLOBS · A* HEURISTIC · 3 REQ/S ARMORED · CHECKPOINT SEQUENCE</div>
+          <div class="engraved-coords">MEMORY · A* HEURISTIC · WALRUS BLOBS · SUI CHECKPOINTS</div>
           <div class="engraved-ornament">✦ ✦ ✦</div>
         </div>
 
@@ -3640,7 +3646,7 @@
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Permanent Snapshots:</strong> Entire goal maps and deliverables sealed permanently as Walrus blobs (<code>walrus://...</code>).
+                  <strong>Shareable Snapshots:</strong> Save a whole goal map as a Walrus blob and share it (<code>walrus://...</code>).
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
@@ -3660,41 +3666,42 @@
             <div class="cardboard-tape top-solid"></div>
             <div class="cb-inner">
               <div class="cb-header">
-                <span class="cb-tag">TATUM // WALRUS STORAGE &amp; SUI RPC</span>
-                <span class="cb-badge live-sui">STORAGE &amp; GATEWAY ACTIVE</span>
+                <span class="cb-tag">TATUM // LIVE FROM SUI</span>
+                <span class="cb-badge live-sui" data-sui="state">CONNECTING</span>
               </div>
-              <h3 class="cb-title">Tatum Walrus Storage &amp; Sui RPC</h3>
-              <div class="cb-meta">Walrus API v4 · Sui Mainnet Node · Armored Gateway</div>
+              <h3 class="cb-title">Proof You Can Re-Check</h3>
+              <div class="cb-meta">Tatum Sui gRPC Gateway · Walrus Storage API</div>
 
               <div class="cb-rule">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
 
-              <div class="cb-telemetry-box">
-                <div class="cb-telemetry-title">TATUM WALRUS STORAGE &amp; QUOTA ARMOR</div>
-                <div class="cb-telemetry-status">NATIVE /v4/data/storage + 3 REQ/S PROTECTION</div>
+              <div class="cb-telemetry-box cb-live">
+                <div class="cb-telemetry-title">LATEST SUI CHECKPOINT</div>
+                <div class="cb-live-number" data-sui="checkpoint">connecting…</div>
+                <div class="cb-live-row">
+                  <span>Epoch <b data-sui="epoch">—</b></span>
+                  <span>Digest <b data-sui="digest">—</b></span>
+                  <span><b data-sui="latency">—</b> ms</span>
+                </div>
               </div>
 
               <ul class="cb-spec-list">
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Native Walrus Storage:</strong> Uses Tatum's <code>/v4/data/storage/upload</code> API to register and certify milestone blobs directly on Walrus Mainnet.
+                  <strong>Anchored:</strong> Each certificate embeds the digest of a live Sui checkpoint, so it cannot be backdated.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Verifiable Milestone Proofs:</strong> Completed milestones are cryptographically stamped with live Sui checkpoint sequences via Tatum Gateway.
+                  <strong>Stored:</strong> Tatum's Storage API writes it to Walrus, certified by a real Sui transaction.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>100% Free-Tier Armor:</strong> Rate guard prevents burning Tatum quota with zero dropped requests during heavy pathfinding.
-                </li>
-                <li>
-                  <span class="cb-bullet">▸</span>
-                  <strong>On-Chain Certification:</strong> Automated tracking of Sui object IDs and Walrus storage events (<code>certified</code> tx digest).
+                  <strong>Re-checkable:</strong> Anyone can verify the file, object, transaction and timeline against the chain.
                 </li>
               </ul>
 
               <div class="cb-footer">
-                <span class="cb-endpoint">STORAGE: api.tatum.io/v4/data/storage/upload</span>
-                <span class="cb-stamp">VERIFIED ONCHAIN</span>
+                <span class="cb-endpoint">GATEWAY: sui-mainnet-grpc.gateway.tatum.io</span>
+                <a class="cb-stamp cb-verify-link" id="latestCertLink" href="#" hidden>VERIFY ONE →</a>
               </div>
             </div>
           </div>
@@ -4154,7 +4161,7 @@
           <div class="opt-info">
             <h4>Walrus Account ID</h4>
             <p>Decentralized memory namespace.</p>
-            <input type="text" id="walrusAccountInput" placeholder="e.g. 0x8a94b2... or alice-dev" />
+            <input type="text" id="walrusAccountInput" placeholder="Paste your memory ID from another device" />
           </div>
           <button id="loginWalrusBtn" class="mini-btn secondary">Sync Memory</button>
         </div>
@@ -4204,14 +4211,9 @@
         </div>
         <div class="footer-status-pill">
           <span class="badge-live-dot"></span>
-          <span><strong>Tatum Sui RPC:</strong> Gateway Ready (Quota Protected 3 req/s)</span>
-        </div>
-        <div class="footer-status-pill">
-          <span class="badge-live-dot"></span>
-          <span><strong>Submission Rule 03:</strong> 10+ Memories on Mainnet</span>
+          <span><strong>Sui via Tatum:</strong> checkpoint <span data-sui="checkpoint">connecting…</span></span>
         </div>
       </div>
-      </p>
     </div>
   </footer>
 
@@ -4249,6 +4251,40 @@
     initTooltips();
     sound.attachListeners();
     auth.init();
+
+    // Live chain data from Tatum. Shows nothing it did not actually read.
+    function paintSui(status) {
+      const paint = (key, value) => document.querySelectorAll(`[data-sui="${key}"]`).forEach((el) => { el.textContent = value; });
+      if (!status.live) {
+        paint('checkpoint', 'unavailable');
+        paint('state', 'OFFLINE');
+        return;
+      }
+      paint('checkpoint', `#${Number(status.checkpoint).toLocaleString()}`);
+      paint('state', 'LIVE');
+      paint('epoch', status.epoch);
+      paint('digest', `${status.digest.slice(0, 6)}…${status.digest.slice(-4)}`);
+      paint('latency', status.latencyMs);
+    }
+
+    async function refreshSui() {
+      if (document.hidden) return;
+      try {
+        paintSui(await (await fetch('/api/tatum/sui-status')).json());
+      } catch {
+        paintSui({ live: false });
+      }
+    }
+    refreshSui();
+    setInterval(refreshSui, 5000);
+
+    fetch('/api/tatum/certificates').then((r) => r.json()).then(({ certificates }) => {
+      const link = document.getElementById('latestCertLink');
+      if (link && certificates?.length) {
+        link.href = `/?cert=tatum://${certificates[0].jobId}`;
+        link.hidden = false;
+      }
+    }).catch(() => {});
 
     // Launch action
     function launchPlanner(targetGoal = null) {

@@ -6,16 +6,19 @@ import 'dotenv/config';
 
 const API_BASE = process.env.API_BASE || 'http://localhost:8000';
 const args = process.argv.slice(2);
+const MEMORY_ID = process.env.GOALSTAR_MEMORY_ID || '';
+const identity = MEMORY_ID ? { 'X-GoalStar-Memory': MEMORY_ID } : {};
 
 async function main() {
   if (args.includes('--status')) {
-    const res = await fetch(`${API_BASE}/api/memory/stats`);
+    const res = await fetch(`${API_BASE}/api/memory/stats`, { headers: identity });
     const json = await res.json();
     console.log('\n[Walrus Portable Memory Status]');
     console.log(`- Enabled: ${json.enabled}`);
     console.log(`- Account ID: ${json.accountId}`);
     console.log(`- Namespace: ${json.namespace}`);
-    console.log(`- Memories Written: ${json.written}`);
+    console.log(`- Memories on Mainnet: ${json.memoryCount ?? 'unknown'}`);
+    console.log(`- Written by this server run: ${json.written}`);
     console.log(`- Recalls: ${json.recalls} (avg ${json.avgRecallMs}ms)\n`);
     return;
   }
@@ -23,10 +26,16 @@ async function main() {
   if (args.includes('--sui')) {
     const res = await fetch(`${API_BASE}/api/tatum/sui-status`);
     const json = await res.json();
-    console.log('\n[Tatum Sui RPC Gateway]');
+    console.log('\n[Tatum Sui gRPC Gateway]');
+    if (!json.live) {
+      console.log(`- Unavailable: ${json.error}\n`);
+      process.exitCode = 1;
+      return;
+    }
     console.log(`- Latest Checkpoint: ${json.checkpoint}`);
+    console.log(`- Checkpoint Digest: ${json.digest}`);
+    console.log(`- Epoch: ${json.epoch}`);
     console.log(`- Chain ID: ${json.chainId}`);
-    console.log(`- Reference Gas: ${json.referenceGasPriceMIST} MIST`);
     console.log(`- Gateway: ${json.gateway}\n`);
     return;
   }
@@ -47,18 +56,6 @@ async function main() {
     return;
   }
 
-  if (args.includes('--seed')) {
-    console.log('\nSeeding 10 workflow memories to Walrus Mainnet...');
-    const res = await fetch(`${API_BASE}/api/memory/seed`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
-    });
-    const json = await res.json();
-    console.log(`✓ Seeded ${json.count} memories. Mode: ${json.mode}\n`);
-    return;
-  }
-
   const text = args.join(' ').trim();
   if (!text) {
     console.log(`
@@ -67,8 +64,14 @@ Usage:
   node cli/log.js --status      Check Walrus Memory statistics
   node cli/log.js --sui         Check Tatum Sui RPC connection
   node cli/log.js --storage     Check Tatum Walrus Storage API uploads
-  node cli/log.js --seed        Pre-populate 10 memories on Mainnet
+  
 `);
+    return;
+  }
+
+  if (!MEMORY_ID) {
+    console.error('Set GOALSTAR_MEMORY_ID first. Copy it from the Walrus panel in the app ("Copy my memory ID").');
+    process.exitCode = 1;
     return;
   }
 
@@ -76,10 +79,11 @@ Usage:
   try {
     const res = await fetch(`${API_BASE}/api/memory/remember`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...identity },
       body: JSON.stringify({ text, category: 'cli_update' })
     });
     const json = await res.json();
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
     console.log(`✓ Stored successfully! (Mode: ${json.mode})`);
     console.log(`[Note] Next time you open GoalStar, the workflow agent will pick up where you left off!\n`);
   } catch (err) {

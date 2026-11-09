@@ -97,6 +97,9 @@ export function buildUserPrompt(req) {
     req.timeframe && `Timeframe: ${req.timeframe}`,
     req.budget && `Budget: ${req.budget}`,
   ];
+  if (req.memories?.length) {
+    lines.push('', 'What this person has learned from past work. Steer away from what blocked them and build on what worked:', ...req.memories.map((m) => `- ${m}`));
+  }
   if (req.existing?.length) {
     lines.push('', 'Existing states (id: label):');
     for (const n of req.existing) {
