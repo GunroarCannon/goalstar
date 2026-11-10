@@ -3267,37 +3267,21 @@ body.arrow-glow .hl { stroke: color-mix(in srgb, var(--gold) 22%, transparent); 
   }
 }
 
-/* Out-bounce: rotates further left (-15deg), scales down to 0.3, bounces as it fades out to 0 */
+/* Out: fast, smooth fade and slight shrink without multi-bounce stutter */
 .gs-tip.out {
   opacity: 0;
-  transform: rotate(-15deg) scale(0.3);
-  animation: gsTipOutBounce 0.36s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform: rotate(-4deg) scale(0.9);
+  animation: gsTipOut 0.14s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
-@keyframes gsTipOutBounce {
+@keyframes gsTipOut {
   0% {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }
-  24% {
-    opacity: 0.95;
-    transform: rotate(-6deg) scale(0.58);
-  }
-  48% {
-    opacity: 0.82;
-    transform: rotate(-10deg) scale(0.78); /* bounce back up */
-  }
-  72% {
-    opacity: 0.45;
-    transform: rotate(-14deg) scale(0.24); /* dip down past 0.3 */
-  }
-  86% {
-    opacity: 0.22;
-    transform: rotate(-13deg) scale(0.35); /* micro rebound */
-  }
   100% {
     opacity: 0;
-    transform: rotate(-15deg) scale(0.3); /* settle at scale 0.3, rotate -15deg, opacity 0 */
+    transform: rotate(-4deg) scale(0.9);
   }
 }
 

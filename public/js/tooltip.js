@@ -19,8 +19,8 @@ let lastPointerX = -1;
 let lastPointerY = -1;
 let tipAnim = null;
 
-const TIP_IN_MS = 280;
-const TIP_OUT_MS = 400;
+const TIP_IN_MS = 240;
+const TIP_OUT_MS = 140;
 
 // In-quad swing: enters from 13deg left at 0.7 scale, smoothly accelerating into place.
 const TIP_IN_FRAMES = [
@@ -28,15 +28,10 @@ const TIP_IN_FRAMES = [
   { opacity: 1, transform: 'rotate(0deg) scale(1)' },
 ];
 
-// Out-bounce: bounces smoothly while rotating left (-15deg), scaling down to 0.3, opacity to 0.
+// Clean, snappy exit: smooth fade and subtle scale down without stuttery multi-bounce
 const TIP_OUT_FRAMES = [
-  { opacity: 1,    transform: 'rotate(0deg) scale(1)',      offset: 0 },
-  { opacity: 0.96, transform: 'rotate(-3deg) scale(0.85)',  offset: 0.18 },
-  { opacity: 0.90, transform: 'rotate(-1deg) scale(0.92)',  offset: 0.32 }, // gentle bounce
-  { opacity: 0.70, transform: 'rotate(-8deg) scale(0.55)',  offset: 0.55 },
-  { opacity: 0.45, transform: 'rotate(-6deg) scale(0.62)',  offset: 0.72 }, // secondary bounce
-  { opacity: 0.20, transform: 'rotate(-12deg) scale(0.38)', offset: 0.88 },
-  { opacity: 0,    transform: 'rotate(-15deg) scale(0.3)',  offset: 1 },
+  { opacity: 1, transform: 'rotate(0deg) scale(1)' },
+  { opacity: 0, transform: 'rotate(-4deg) scale(0.9)' },
 ];
 
 const TIP_IN_REDUCED = [
@@ -195,10 +190,10 @@ function hide() {
   tipEl.classList.remove('show');
   void tipEl.offsetWidth;
   tipEl.classList.add('out');
-  playTip(TIP_OUT_FRAMES, TIP_OUT_MS, 'linear', TIP_OUT_REDUCED);
+  playTip(TIP_OUT_FRAMES, TIP_OUT_MS, 'cubic-bezier(0.4, 0, 1, 1)', TIP_OUT_REDUCED);
 
-  // Keep tracking for the whole out-bounce so the note stays glued to its element.
-  startLoop();
+  // Stop the placement loop immediately on hide so it doesn't thrash layout during fade-out
+  stopLoop();
 
   clearTimeout(hideTimer);
   hideTimer = setTimeout(() => {
@@ -211,7 +206,7 @@ function hide() {
     }
     activeAnchor = null;
     stopLoop();
-  }, TIP_OUT_MS + 30);
+  }, TIP_OUT_MS + 20);
 }
 
 export function initTooltips() {

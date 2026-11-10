@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html lang="en" data-theme-preset="notebook">
+
 <head>
   <base href="/">
   <script>
-    (function() {
+    (function () {
       try {
         const saved = localStorage.getItem('goalstar_theme_preset') || (localStorage.getItem('goalstar_theme') === 'dark' ? 'night' : 'notebook');
         document.documentElement.setAttribute('data-theme-preset', saved);
         const isDark = ['night', 'blueprint', 'terminal', 'simple-dark'].includes(saved);
         document.documentElement.setAttribute('data-theme-mode', isDark ? 'dark' : 'light');
         document.documentElement.classList.toggle('dark-mode', isDark);
-      } catch (e) {}
+      } catch (e) { }
     })();
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>GoalStar — A* Pathfinding for Life Goals, Backed by Portable Memory</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><polygon points='20,4 24,14 35,15 27,22 29,33 20,27 11,33 13,22 5,15 16,14' fill='%23f59e0b'/></svg>">
-  
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><polygon points='20,4 24,14 35,15 27,22 29,33 20,27 11,33 13,22 5,15 16,14' fill='%23f59e0b'/></svg>">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Space+Grotesk:wght@500;600;700;800&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Space+Grotesk:wght@500;600;700;800&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <link rel="stylesheet" href="css/style.css">
-  
+
   <style>
     /* ========================================================
        EDITORIAL PHOTO ALBUM THEME & SPACING (FRONTEND-DESIGN)
@@ -140,7 +144,8 @@
       scroll-behavior: smooth;
     }
 
-    html:has(body.landing-body), body.landing-body {
+    html:has(body.landing-body),
+    body.landing-body {
       height: auto !important;
       min-height: 100vh !important;
       overflow-x: hidden !important;
@@ -168,7 +173,7 @@
       pointer-events: none;
       z-index: 0;
       opacity: 0.4;
-      background-image: 
+      background-image:
         linear-gradient(rgba(42, 45, 62, 0.04) 1px, transparent 1px),
         linear-gradient(90deg, rgba(42, 45, 62, 0.04) 1px, transparent 1px);
       background-size: 32px 32px;
@@ -176,7 +181,7 @@
 
     body[data-paper='night']::before {
       opacity: 0.18;
-      background-image: 
+      background-image:
         linear-gradient(rgba(245, 158, 11, 0.07) 1px, transparent 1px),
         linear-gradient(90deg, rgba(245, 158, 11, 0.07) 1px, transparent 1px);
     }
@@ -199,13 +204,13 @@
       position: absolute;
       will-change: transform, opacity;
       opacity: 0.22;
-      filter: grayscale(12%) drop-shadow(0 15px 25px rgba(0,0,0,0.06));
+      filter: grayscale(12%) drop-shadow(0 15px 25px rgba(0, 0, 0, 0.06));
       transform-origin: center center;
     }
 
     body[data-paper='night'] .bg-humaaan-item {
       opacity: 0.16;
-      filter: brightness(0.85) drop-shadow(0 15px 30px rgba(0,0,0,0.4));
+      filter: brightness(0.85) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
     }
 
     .bg-humaaan-img {
@@ -218,6 +223,7 @@
       .bg-humaaan-item {
         opacity: 0.11;
       }
+
       .bg-humaaan-img {
         height: 230px;
       }
@@ -246,7 +252,8 @@
     }
 
     .cloud-layer.front {
-      z-index: 0; /* behind main cards and interactive controls so sliders are never blocked */
+      z-index: 0;
+      /* behind main cards and interactive controls so sliders are never blocked */
       pointer-events: none;
       opacity: 0.28;
     }
@@ -285,11 +292,10 @@
       width: 100%;
       height: 720px;
       pointer-events: none;
-      z-index: 9; /* Behind the hero copy and cards (10), so the headline is readable on load */
+      z-index: 45;
+      /* In front of hero visualizer & cards (10), below masthead (100) */
       overflow: hidden;
       will-change: transform, opacity;
-      -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
-      mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
     }
 
     .cloud-gate-wing {
@@ -414,44 +420,50 @@
     }
 
     .cgi-left-puff {
-      width: 5020px;
+      width: 520px;
       left: 20%;
-      top: 50%;
-      transform: translate(-50%, -50%);
+      top: 10%;
+      transform: translate(-50%, -50%) scale(0.6);
       opacity: 0.92;
     }
 
     .cgi-left-sub {
       width: 420px;
-      left: 52%;
-      top: 65%;
-      transform: translate(-50%, -50%) scaleX(-1);
+      left: 82%;
+      top: 15%;
+      transform: translate(-50%, -50%) scale(1);
       opacity: 0.82;
     }
-    .cloud-gate-mist {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 68% 58% at 60% 48%, var(--paper, #faf7f0) 0%, color-mix(in srgb, var(--paper, #faf7f0) 80%, transparent) 40%, transparent 75%);
-      opacity: 0.88;
-      pointer-events: none;
-      will-change: opacity;
-    }
 
-    body[data-paper='night'] .cloud-gate-mist {
-      background: radial-gradient(ellipse 68% 58% at 60% 48%, #0f172a 0%, rgba(15, 23, 42, 0.85) 40%, transparent 75%);
+    .cloud-gate-mist,
+    .cloud-shroud-mist {
+      display: none !important;
     }
 
     @media (max-width: 900px) {
       .opening-cloud-gate {
         height: 600px;
       }
+
       .cloud-gate-wing {
         width: 75%;
       }
-      .cgi-left-main { width: 440px; }
-      .cgi-right-main { width: 480px; }
-      .cgi-center-puff { width: 360px; }
-      .cgi-left-puff { width: 360px; }
+
+      .cgi-left-main {
+        width: 440px;
+      }
+
+      .cgi-right-main {
+        width: 480px;
+      }
+
+      .cgi-center-puff {
+        width: 360px;
+      }
+
+      .cgi-left-puff {
+        width: 360px;
+      }
     }
 
     /* Parting Cloud Shroud: Directly blocks the visualizer in the hero */
@@ -519,28 +531,24 @@
       opacity: 0.98;
     }
 
-    .cloud-shroud-mist {
-      position: absolute;
-      inset: 8px;
-      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.5) 55%, transparent 80%);
-      border-radius: 12px;
-      pointer-events: none;
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      will-change: opacity, transform;
-    }
 
-    body[data-paper='night'] .cloud-shroud-mist {
-      background: radial-gradient(circle at center, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.45) 55%, transparent 80%);
-    }
 
     @media (max-width: 768px) {
       .cloud-parting-shroud {
         inset: -15px -25px -15px -25px;
       }
-      .cloud-left-primary { width: 250px; }
-      .cloud-right-primary { width: 260px; }
-      .cloud-center-puff { width: 210px; }
+
+      .cloud-left-primary {
+        width: 250px;
+      }
+
+      .cloud-right-primary {
+        width: 260px;
+      }
+
+      .cloud-center-puff {
+        width: 210px;
+      }
     }
 
     /* ----------------------------------------------------
@@ -552,7 +560,7 @@
       z-index: 100;
       background: var(--panel);
       border-bottom: 2px solid var(--ink);
-      box-shadow: 0 3px 0 var(--ink), 0 6px 14px rgba(0,0,0,0.08);
+      box-shadow: 0 3px 0 var(--ink), 0 6px 14px rgba(0, 0, 0, 0.08);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -634,19 +642,19 @@
       background: #e2ded7;
       border: 1.5px solid rgba(42, 45, 62, 0.3);
       border-radius: 16px;
-      box-shadow: 
-        inset 0 3px 6px rgba(0,0,0,0.22),
-        inset 0 1px 2px rgba(0,0,0,0.18),
-        0 1px 0 rgba(255,255,255,0.7);
+      box-shadow:
+        inset 0 3px 6px rgba(0, 0, 0, 0.22),
+        inset 0 1px 2px rgba(0, 0, 0, 0.18),
+        0 1px 0 rgba(255, 255, 255, 0.7);
       box-sizing: border-box;
     }
 
     body[data-paper='night'] .engraved-switch .switch-track {
       background: #0f172a;
       border-color: rgba(245, 158, 11, 0.4);
-      box-shadow: 
-        inset 0 3px 6px rgba(0,0,0,0.65),
-        inset 0 1px 3px rgba(0,0,0,0.5),
+      box-shadow:
+        inset 0 3px 6px rgba(0, 0, 0, 0.65),
+        inset 0 1px 3px rgba(0, 0, 0, 0.5),
         0 1px 0 rgba(245, 158, 11, 0.15);
     }
 
@@ -659,9 +667,9 @@
       background: #ffffff;
       border-radius: 50%;
       border: 1px solid rgba(42, 45, 62, 0.2);
-      box-shadow: 
-        0 3px 6px rgba(0,0,0,0.22),
-        0 1px 2px rgba(0,0,0,0.14),
+      box-shadow:
+        0 3px 6px rgba(0, 0, 0, 0.22),
+        0 1px 2px rgba(0, 0, 0, 0.14),
         inset 0 1px 0 #ffffff;
       transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 3;
@@ -670,9 +678,9 @@
     body[data-paper='night'] .engraved-switch .switch-knob {
       background: #334155;
       border-color: rgba(245, 158, 11, 0.4);
-      box-shadow: 
-        0 3px 8px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.2);
+      box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
     .engraved-switch.active .switch-knob {
@@ -688,7 +696,7 @@
       font-weight: 800;
       letter-spacing: 1px;
       color: rgba(42, 45, 62, 0.65);
-      text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
       pointer-events: none;
       z-index: 1;
       text-align: center;
@@ -698,7 +706,7 @@
 
     body[data-paper='night'] .engraved-switch .track-label {
       color: rgba(245, 158, 11, 0.75);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     }
 
     .engraved-switch.active .track-label {
@@ -707,7 +715,8 @@
     }
 
     /* Buttons: Flat Tactile Photo Album Style (No 3D Bevels) */
-    .album-btn, .tape-btn {
+    .album-btn,
+    .tape-btn {
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 700;
       font-size: 14px;
@@ -760,6 +769,7 @@
       border-color: rgba(245, 158, 11, 0.4);
       box-shadow: 2px 2px 0 rgba(245, 158, 11, 0.3);
     }
+
     /* Tour Button - No Bounce */
     .tour-bounce-btn {
       animation: none !important;
@@ -859,8 +869,17 @@
     }
 
     @keyframes pulseDot {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.7; }
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.3);
+        opacity: 0.7;
+      }
     }
 
     body[data-paper='night'] .hero-badge {
@@ -937,11 +956,11 @@
       margin: 0 0 26px;
     }
 
-    .hero-cta-row + .hero-explain {
+    .hero-cta-row+.hero-explain {
       margin-top: 24px;
     }
 
-    .hero-explain > div {
+    .hero-explain>div {
       border-left: 2.5px solid var(--accent);
       padding: 2px 0 2px 12px;
     }
@@ -965,7 +984,10 @@
     }
 
     @media (max-width: 720px) {
-      .hero-explain { grid-template-columns: 1fr; gap: 10px; }
+      .hero-explain {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
     }
 
     .hero-cta-row {
@@ -982,7 +1004,7 @@
       border: var(--card-border);
       border-radius: 4px;
       padding: 14px 14px 22px;
-      box-shadow: 
+      box-shadow:
         0 16px 32px rgba(0, 0, 0, 0.12),
         0 3px 8px rgba(0, 0, 0, 0.06);
       transform-origin: top center;
@@ -1038,7 +1060,7 @@
       width: auto;
       object-fit: contain;
       z-index: 2;
-      filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.12));
+      filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.12));
     }
 
     .photo-constellation-svg {
@@ -1121,7 +1143,7 @@
       border-radius: inherit;
     }
 
-    
+
 
     /* Top Washi Tape on Simulator */
     .sim-card::before {
@@ -1135,7 +1157,7 @@
       background: var(--washi-light);
       border-left: 2px dashed rgba(42, 45, 62, 0.18);
       border-right: 2px dashed rgba(42, 45, 62, 0.18);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       z-index: 15;
     }
 
@@ -1234,26 +1256,31 @@
       border-color: #10b981;
       box-shadow: 2px 2px 0 rgba(16, 185, 129, 0.4);
     }
+
     .sim-node-title {
       display: inline-block;
       font-weight: 700;
       line-height: 1.25;
     }
+
     .uc-custom-card {
       border-left: 4px solid var(--accent) !important;
     }
+
     .uc-custom-details {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
+
     .uc-custom-intro {
       font-size: 14px;
       color: var(--ink-soft);
       line-height: 1.5;
       margin: 0;
     }
+
     .custom-goal-form {
       display: flex;
       flex-direction: column;
@@ -1263,10 +1290,12 @@
       border: 1.5px dashed var(--border);
       border-radius: 4px;
     }
+
     body[data-paper='night'] .custom-goal-form {
       background: #0f172a;
       border-color: rgba(245, 158, 11, 0.25);
     }
+
     .custom-goal-label {
       font-family: 'Space Grotesk', monospace;
       font-size: 11px;
@@ -1275,11 +1304,13 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+
     .custom-goal-input-wrap {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
     }
+
     .custom-goal-input {
       flex: 1;
       min-width: 220px;
@@ -1294,26 +1325,31 @@
       box-shadow: 2px 2px 0 var(--ink);
       transition: border-color 0.2s;
     }
+
     body[data-paper='night'] .custom-goal-input {
       background: #1e293b;
       border-color: rgba(245, 158, 11, 0.4);
       color: #f8fafc;
       box-shadow: 2px 2px 0 rgba(245, 158, 11, 0.3);
     }
+
     .custom-goal-input:focus {
       border-color: var(--accent);
     }
+
     .custom-goal-submit {
       padding: 10px 18px !important;
       font-size: 14px !important;
       white-space: nowrap;
     }
+
     .custom-goal-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       margin-top: 4px;
     }
+
     .goal-chip {
       font-size: 11.5px;
       font-family: 'Space Grotesk', monospace;
@@ -1327,16 +1363,19 @@
       transition: all 0.15s ease;
       user-select: none;
     }
+
     .goal-chip:hover {
       border-color: var(--accent);
       color: var(--accent);
       transform: translateY(-1px);
     }
+
     body[data-paper='night'] .goal-chip {
       background: #1e293b;
       border-color: rgba(245, 158, 11, 0.3);
       color: #cbd5e1;
     }
+
     body[data-paper='night'] .goal-chip:hover {
       background: rgba(245, 158, 11, 0.2);
       color: #f59e0b;
@@ -1506,7 +1545,7 @@
       border-radius: inherit;
     }
 
-    
+
     html[data-theme-mode='dark'] .sim-card::after,
     body[data-paper='night'] .sim-card::after,
     body[data-paper='blueprint'] .sim-card::after,
@@ -1627,8 +1666,13 @@
       pointer-events: none;
     }
 
-    .sim-node.start::before { background: rgba(59, 130, 246, 0.25); }
-    .sim-node.goal::before { background: rgba(245, 158, 11, 0.38); }
+    .sim-node.start::before {
+      background: rgba(59, 130, 246, 0.25);
+    }
+
+    .sim-node.goal::before {
+      background: rgba(245, 158, 11, 0.38);
+    }
 
     body[data-paper='night'] .sim-node {
       background: #1e293b;
@@ -2097,7 +2141,7 @@
       background: var(--washi-light);
       border-left: 2px dashed rgba(42, 45, 62, 0.16);
       border-right: 2px dashed rgba(42, 45, 62, 0.16);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
       z-index: 10;
     }
 
@@ -2245,7 +2289,7 @@
       max-height: 140px;
       width: auto;
       object-fit: contain;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.08));
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.08));
       will-change: transform;
       transition: transform 0.2s ease-out;
     }
@@ -2329,8 +2373,17 @@
     }
 
     @keyframes targetPulse {
-      0%, 100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.04); opacity: 0.5; }
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.9;
+      }
+
+      50% {
+        transform: scale(1.04);
+        opacity: 0.5;
+      }
     }
 
     /* ----------------------------------------------------
@@ -2347,17 +2400,20 @@
       overflow: visible;
     }
 
-    
+
     /* Arrow & Route Glow Toggle (controlled via Settings / Glow switch) */
     body.arrow-glow .sim-route-line.active {
       filter: drop-shadow(0 0 6px var(--accent)) !important;
     }
+
     body.arrow-glow .traveling-arrow {
       filter: drop-shadow(0 2px 6px var(--accent)) !important;
     }
+
     body.arrow-glow .traveling-arrow.is-circle {
       box-shadow: 0 0 16px var(--accent) !important;
     }
+
     body:not(.arrow-glow) .sim-route-line.active,
     body:not(.arrow-glow) .traveling-arrow,
     body:not(.arrow-glow) .traveling-arrow.is-circle {
@@ -2527,85 +2583,107 @@
         gap: 32px;
         text-align: center;
       }
+
       .hero-desc {
         margin: 0 auto 24px auto;
       }
+
       .hero-cta-row {
         justify-content: center;
       }
+
       .hanging-photo-card {
         margin: 10px auto 0;
       }
+
       .sim-head {
         flex-direction: column;
         align-items: stretch;
       }
+
       .sim-slider-box {
         justify-content: space-between;
       }
     }
 
     @media (max-width: 768px) {
-      html, body {
+
+      html,
+      body {
         overflow-x: hidden !important;
         width: 100% !important;
       }
+
       .landing-header {
         padding: 8px 12px;
         gap: 8px;
         max-width: 100vw;
         box-sizing: border-box;
       }
+
       .landing-nav {
         display: none;
       }
+
       .landing-actions {
         gap: 6px;
       }
+
       .btn-3d-toggle {
         width: 32px;
         height: 26px;
       }
+
       .engraved-switch {
         width: 88px;
         height: 32px;
       }
+
       .engraved-switch .switch-track {
         width: 86px;
         height: 30px;
         border-radius: 15px;
       }
+
       .engraved-switch .switch-knob {
         width: 23px;
         height: 23px;
         top: 2px;
         left: 2px;
       }
+
       .engraved-switch.active .switch-knob {
         transform: translateX(57px);
       }
+
       .engraved-switch .track-label {
         font-size: 10px;
         left: 26px;
         width: 54px;
       }
+
       .engraved-switch.active .track-label {
         left: 4px;
         width: 52px;
       }
-      .album-btn, .tape-btn {
+
+      .album-btn,
+      .tape-btn {
         padding: 7px 12px;
         font-size: 13px;
       }
+
       .uc-content-flex {
         flex-direction: column-reverse;
         align-items: center;
         text-align: left;
       }
+
       .uc-humaaan-frame {
         width: 120px;
         height: 120px;
       }
+
       .uc-humaaan-img {
         max-height: 120px;
       }
@@ -2615,174 +2693,202 @@
       .hero-title {
         font-size: 28px;
       }
+
       .hero-desc {
         font-size: 15px;
       }
+
       .sim-title-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .sim-subtitle {
-      font-size: 13.5px;
-      color: var(--ink-soft);
-      margin: 0;
-    }
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
 
-    .uc-custom-card {
-      border-left: 4px solid var(--accent) !important;
-    }
-    .uc-custom-details {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .uc-custom-intro {
-      font-size: 14px;
-      color: var(--ink-soft);
-      line-height: 1.5;
-      margin: 0;
-    }
-    .custom-goal-form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: var(--paper-warm);
-      padding: 14px;
-      border: 1.5px dashed var(--border);
-      border-radius: 4px;
-    }
-    body[data-paper='night'] .custom-goal-form {
-      background: #0f172a;
-      border-color: rgba(245, 158, 11, 0.25);
-    }
-    .custom-goal-label {
-      font-family: 'Space Grotesk', monospace;
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .custom-goal-input-wrap {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .custom-goal-input {
-      flex: 1;
-      min-width: 220px;
-      padding: 10px 14px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
-      background: #ffffff;
-      border: 1.5px solid var(--ink);
-      border-radius: 4px;
-      color: var(--ink);
-      outline: none;
-      box-shadow: 2px 2px 0 var(--ink);
-      transition: border-color 0.2s;
-    }
-    body[data-paper='night'] .custom-goal-input {
-      background: #1e293b;
-      border-color: rgba(245, 158, 11, 0.4);
-      color: #f8fafc;
-      box-shadow: 2px 2px 0 rgba(245, 158, 11, 0.3);
-    }
-    .custom-goal-input:focus {
-      border-color: var(--accent);
-    }
-    .custom-goal-submit {
-      padding: 10px 18px !important;
-      font-size: 14px !important;
-      white-space: nowrap;
-    }
-    .custom-goal-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
-    }
-    .goal-chip {
-      font-size: 11.5px;
-      font-family: 'Space Grotesk', monospace;
-      font-weight: 700;
-      padding: 3px 10px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-      color: var(--ink-soft);
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-    .goal-chip:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      transform: translateY(-1px);
-    }
-    body[data-paper='night'] .goal-chip {
-      background: #1e293b;
-      border-color: rgba(245, 158, 11, 0.3);
-      color: #cbd5e1;
-    }
-    body[data-paper='night'] .goal-chip:hover {
-      background: rgba(245, 158, 11, 0.2);
-      color: #f59e0b;
-    }
+      .sim-subtitle {
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        margin: 0;
+      }
 
-    .sim-canvas {
+      .uc-custom-card {
+        border-left: 4px solid var(--accent) !important;
+      }
+
+      .uc-custom-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .uc-custom-intro {
+        font-size: 14px;
+        color: var(--ink-soft);
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .custom-goal-form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--paper-warm);
+        padding: 14px;
+        border: 1.5px dashed var(--border);
+        border-radius: 4px;
+      }
+
+      body[data-paper='night'] .custom-goal-form {
+        background: #0f172a;
+        border-color: rgba(245, 158, 11, 0.25);
+      }
+
+      .custom-goal-label {
+        font-family: 'Space Grotesk', monospace;
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .custom-goal-input-wrap {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .custom-goal-input {
+        flex: 1;
+        min-width: 220px;
+        padding: 10px 14px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 14px;
+        background: #ffffff;
+        border: 1.5px solid var(--ink);
+        border-radius: 4px;
+        color: var(--ink);
+        outline: none;
+        box-shadow: 2px 2px 0 var(--ink);
+        transition: border-color 0.2s;
+      }
+
+      body[data-paper='night'] .custom-goal-input {
+        background: #1e293b;
+        border-color: rgba(245, 158, 11, 0.4);
+        color: #f8fafc;
+        box-shadow: 2px 2px 0 rgba(245, 158, 11, 0.3);
+      }
+
+      .custom-goal-input:focus {
+        border-color: var(--accent);
+      }
+
+      .custom-goal-submit {
+        padding: 10px 18px !important;
+        font-size: 14px !important;
+        white-space: nowrap;
+      }
+
+      .custom-goal-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .goal-chip {
+        font-size: 11.5px;
+        font-family: 'Space Grotesk', monospace;
+        font-weight: 700;
+        padding: 3px 10px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        color: var(--ink-soft);
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+
+      .goal-chip:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      body[data-paper='night'] .goal-chip {
+        background: #1e293b;
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #cbd5e1;
+      }
+
+      body[data-paper='night'] .goal-chip:hover {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+      }
+
+      .sim-canvas {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
         padding: 16px 10px;
       }
+
       .sim-node {
         max-width: none;
         width: 100%;
         padding: 8px 6px;
         font-size: 12px;
       }
-      .journey-svg-track, .traveling-arrow {
+
+      .journey-svg-track,
+      .traveling-arrow {
         display: none;
       }
+
       .hero-cta-row {
         flex-direction: column;
         width: 100%;
       }
+
       .hero-cta-row .album-btn {
         width: 100%;
       }
-    /* Tour Button - No Bounce */
-    .tour-bounce-btn {
-      animation: none !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
+
+      /* Tour Button - No Bounce */
+      .tour-bounce-btn {
+        animation: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
 
       .uc-card {
         padding: 18px 16px;
       }
+
       .uc-card-header {
         flex-direction: column;
         align-items: flex-start;
       }
+
       .uc-card-footer {
         flex-direction: column;
         align-items: stretch;
       }
+
       .uc-card-footer .album-btn {
         width: 100%;
       }
-    /* Tour Button - No Bounce */
-    .tour-bounce-btn {
-      animation: none !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
+
+      /* Tour Button - No Bounce */
+      .tour-bounce-btn {
+        animation: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
 
     }
 
@@ -2791,11 +2897,13 @@
         padding: 40px 10px 50px !important;
         overflow: hidden !important;
       }
+
       .cardboard-stage-wrap {
         min-height: auto !important;
         perspective: none !important;
         overflow: hidden !important;
       }
+
       .engraved-centerpiece {
         position: relative !important;
         top: auto !important;
@@ -2804,6 +2912,7 @@
         width: 100% !important;
         margin: 0 auto 20px !important;
       }
+
       .cardboard-piece.walrus-cardboard,
       .cardboard-piece.tatum-cardboard {
         transform: translateY(20px) !important;
@@ -2811,11 +2920,13 @@
         padding: 36px 20px 28px 24px !important;
         max-width: 100% !important;
       }
+
       .cardboard-stage-wrap.cards-entered .walrus-cardboard,
       .cardboard-stage-wrap.cards-entered .tatum-cardboard {
         transform: none !important;
         opacity: 1 !important;
       }
+
       .cardboard-stage-wrap.cards-entered .engraved-centerpiece {
         transform: none !important;
         opacity: 0.8 !important;
@@ -2826,35 +2937,43 @@
       #launchPlannerTopBtn {
         display: none !important;
       }
+
       .landing-brand .word,
       .brand .word {
         font-size: 17px !important;
       }
+
       .landing-header {
         padding: 6px 10px !important;
         gap: 6px !important;
         max-width: 100vw !important;
         box-sizing: border-box !important;
       }
+
       .landing-actions {
         gap: 5px !important;
       }
+
       .landing-actions #loginBtn {
         padding: 4px 8px !important;
         font-size: 11.5px !important;
       }
+
       .hero-sec {
         padding: 24px 12px 20px !important;
         gap: 18px !important;
       }
+
       .hero-title {
         font-size: 24px !important;
         line-height: 1.25 !important;
       }
+
       .hero-desc {
         font-size: 13.5px !important;
         line-height: 1.45 !important;
       }
+
       .hanging-photo-card {
         max-width: 100% !important;
         width: 100% !important;
@@ -2862,25 +2981,35 @@
         padding: 10px 10px 18px !important;
         box-sizing: border-box !important;
       }
+
       .polaroid-inner-art {
         height: 180px !important;
       }
+
       .polaroid-humaaan-hero {
         height: 150px !important;
       }
-      .login-dialog, .home-tour-modal, .scenario-modal {
+
+      .login-dialog,
+      .home-tour-modal,
+      .scenario-modal {
         padding: 8px !important;
       }
-      .login-box, .home-tour-content, .scenario-modal-box {
+
+      .login-box,
+      .home-tour-content,
+      .scenario-modal-box {
         padding: 14px 12px !important;
       }
     }
 
     @media (max-width: 380px) {
+
       .landing-brand .word,
       .brand .word {
         font-size: 15px !important;
       }
+
       .btn-3d-toggle {
         width: 26px !important;
         height: 24px !important;
@@ -3042,6 +3171,7 @@
       left: 110px !important;
       transform: rotate(-3deg) !important;
     }
+
     .cardboard-piece.tatum-cardboard .cb-header {
       display: flex !important;
       justify-content: flex-start !important;
@@ -3050,6 +3180,7 @@
       flex-wrap: wrap !important;
       max-width: 330px !important;
     }
+
     .cardboard-piece.tatum-cardboard .cb-badge.live-sui {
       white-space: nowrap !important;
       background: rgba(2, 132, 199, 0.18) !important;
@@ -3135,10 +3266,21 @@
       transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .bar-time { background: #10b981; }
-    .bar-money { background: #34d399; }
-    .bar-effort { background: #f59e0b; }
-    .bar-risk { background: #f87171; }
+    .bar-time {
+      background: #10b981;
+    }
+
+    .bar-money {
+      background: #34d399;
+    }
+
+    .bar-effort {
+      background: #f59e0b;
+    }
+
+    .bar-risk {
+      background: #f87171;
+    }
 
     .scenario-modal-actions {
       display: flex;
@@ -3151,7 +3293,8 @@
     }
 
     /* Standard Modals */
-    .login-dialog, .home-tour-modal {
+    .login-dialog,
+    .home-tour-modal {
       position: fixed;
       top: 0;
       left: 0;
@@ -3167,11 +3310,13 @@
       box-sizing: border-box;
     }
 
-    .login-dialog[hidden], .home-tour-modal[hidden] {
+    .login-dialog[hidden],
+    .home-tour-modal[hidden] {
       display: none;
     }
 
-    .login-box, .home-tour-content {
+    .login-box,
+    .home-tour-content {
       background: var(--panel);
       border: 2px solid var(--ink);
       border-radius: 4px;
@@ -3328,6 +3473,7 @@
     }
   </style>
 </head>
+
 <body class="landing-body" data-paper="lined">
 
   <!-- 5 Background Parallax Humaaans Figures with Calm Parallax -->
@@ -3352,34 +3498,49 @@
   <!-- Non-Sticky Clouds: Static until user scrolls, rarely overlapping (low chance) -->
   <div class="cloud-layer back" id="cloudLayerBack" aria-hidden="true">
     <!-- Solitary spaced-out background clouds -->
-    <img class="page-cloud" id="bgCloud1" src="assets/cloud.png" alt="" style="top: 560px; left: 3%; width: 460px; opacity: 0.38;">
-    <img class="page-cloud" id="bgCloud2" src="assets/cloud.png" alt="" style="top: 1140px; right: 4%; width: 480px; opacity: 0.42; transform: scaleX(-1);">
-    <img class="page-cloud" id="bgCloud3" src="assets/cloud.png" alt="" style="top: 1700px; left: 5%; width: 440px; opacity: 0.36;">
-    <img class="page-cloud" id="bgCloud4" src="assets/cloud.png" alt="" style="top: 2260px; right: 4%; width: 490px; opacity: 0.40; transform: scaleX(-1);">
-    <img class="page-cloud" id="bgCloud5" src="assets/cloud.png" alt="" style="top: 2820px; left: 3%; width: 460px; opacity: 0.38;">
+    <img class="page-cloud" id="bgCloud1" src="assets/cloud.png" alt=""
+      style="top: 560px; left: 3%; width: 460px; opacity: 0.38;">
+    <img class="page-cloud" id="bgCloud2" src="assets/cloud.png" alt=""
+      style="top: 1140px; right: 4%; width: 480px; opacity: 0.42; transform: scaleX(-1);">
+    <img class="page-cloud" id="bgCloud3" src="assets/cloud.png" alt=""
+      style="top: 1700px; left: 5%; width: 440px; opacity: 0.36;">
+    <img class="page-cloud" id="bgCloud4" src="assets/cloud.png" alt=""
+      style="top: 2260px; right: 4%; width: 490px; opacity: 0.40; transform: scaleX(-1);">
+    <img class="page-cloud" id="bgCloud5" src="assets/cloud.png" alt=""
+      style="top: 2820px; left: 3%; width: 460px; opacity: 0.38;">
     <!-- Single low-chance pair near footer -->
-    <img class="page-cloud" id="bgCloud6" src="assets/cloud.png" alt="" style="top: 3340px; right: 5%; width: 450px; opacity: 0.35; transform: scaleX(-1);">
-    <img class="page-cloud" id="bgCloud7" src="assets/cloud.png" alt="" style="top: 3420px; right: 19%; width: 370px; opacity: 0.28; transform: scaleX(-1);">
+    <img class="page-cloud" id="bgCloud6" src="assets/cloud.png" alt=""
+      style="top: 3340px; right: 5%; width: 450px; opacity: 0.35; transform: scaleX(-1);">
+    <img class="page-cloud" id="bgCloud7" src="assets/cloud.png" alt=""
+      style="top: 3420px; right: 19%; width: 370px; opacity: 0.28; transform: scaleX(-1);">
   </div>
 
   <div class="cloud-layer front" id="cloudLayerFront" aria-hidden="true">
     <!-- Solitary spaced-out foreground clouds (~0.7 to 0.3 opacity) -->
-    <img class="page-cloud" id="fgCloud1" src="assets/cloud.png" alt="" style="top: 840px; right: 2%; width: 400px; opacity: 0.58; transform: scaleX(-1);">
-    <img class="page-cloud" id="fgCloud2" src="assets/cloud.png" alt="" style="top: 1400px; left: 2%; width: 430px; opacity: 0.62;">
-    <img class="page-cloud" id="fgCloud3" src="assets/cloud.png" alt="" style="top: 1980px; right: 2%; width: 410px; opacity: 0.52; transform: scaleX(-1);">
-    <img class="page-cloud" id="fgCloud4" src="assets/cloud.png" alt="" style="top: 2540px; left: 2%; width: 420px; opacity: 0.48;">
+    <img class="page-cloud" id="fgCloud1" src="assets/cloud.png" alt=""
+      style="top: 840px; right: 2%; width: 400px; opacity: 0.58; transform: scaleX(-1);">
+    <img class="page-cloud" id="fgCloud2" src="assets/cloud.png" alt=""
+      style="top: 1400px; left: 2%; width: 430px; opacity: 0.62;">
+    <img class="page-cloud" id="fgCloud3" src="assets/cloud.png" alt=""
+      style="top: 1980px; right: 2%; width: 410px; opacity: 0.52; transform: scaleX(-1);">
+    <img class="page-cloud" id="fgCloud4" src="assets/cloud.png" alt=""
+      style="top: 2540px; left: 2%; width: 420px; opacity: 0.48;">
     <!-- Single low-chance pair near footer -->
-    <img class="page-cloud" id="fgCloud5" src="assets/cloud.png" alt="" style="top: 3080px; right: 3%; width: 410px; opacity: 0.44; transform: scaleX(-1);">
-    <img class="page-cloud" id="fgCloud6" src="assets/cloud.png" alt="" style="top: 3160px; right: 18%; width: 320px; opacity: 0.34; transform: scaleX(-1);">
+    <img class="page-cloud" id="fgCloud5" src="assets/cloud.png" alt=""
+      style="top: 3080px; right: 3%; width: 410px; opacity: 0.44; transform: scaleX(-1);">
+    <img class="page-cloud" id="fgCloud6" src="assets/cloud.png" alt=""
+      style="top: 3160px; right: 18%; width: 320px; opacity: 0.34; transform: scaleX(-1);">
   </div>
 
   <!-- Sticky Header with Engraved Pill Switches and Album Action Buttons -->
   <header class="landing-header">
     <a class="brand" href="/home" title="GoalStar Total Recall Edition">
       <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
-        <path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4" stroke="#d97706" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <circle cx="6.2" cy="33" r="3.6" fill="#059669"/>
-        <polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0" fill="#f59e0b" stroke="#1e293b" stroke-width="1.5"/>
+        <path class="trail" d="M9.6 31.2 C 14.5 30.5, 14.5 23.5, 21.2 21.4" stroke="#d97706" stroke-width="2.5"
+          fill="none" stroke-linecap="round" />
+        <circle cx="6.2" cy="33" r="3.6" fill="#059669" />
+        <polygon points="28.5,3.0 31.0,9.0 37.5,9.6 32.6,13.8 34.1,20.2 28.5,16.8 22.9,20.2 24.4,13.8 19.5,9.6 26.0,9.0"
+          fill="#f59e0b" stroke="#1e293b" stroke-width="1.5" />
       </svg>
       <span class="word">goal<b>star</b></span>
     </a>
@@ -3402,32 +3563,58 @@
 
     <div class="landing-actions">
       <!-- 3D Toggle: Dark / Light (Vector SVG Icons, No Emojis) -->
-      <button class="btn-3d-toggle" id="themeSwitch" role="switch" title="Toggle Light / Dark Mode" aria-label="Toggle light/dark" tabindex="0">
+      <button class="btn-3d-toggle" id="themeSwitch" role="switch" title="Toggle Light / Dark Mode"
+        aria-label="Toggle light/dark" tabindex="0">
         <span class="btn-3d-face">
           <span class="toggle-icon-light">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+              stroke-linecap="round">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
           </span>
           <span class="toggle-icon-dark">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
           </span>
         </span>
       </button>
 
       <!-- 3D Toggle: Mute / Unmute (Vector SVG Icons, No Emojis) -->
-      <button class="btn-3d-toggle" id="soundSwitch" role="switch" title="Toggle Sound" aria-label="Toggle sound" tabindex="0">
+      <button class="btn-3d-toggle" id="soundSwitch" role="switch" title="Toggle Sound" aria-label="Toggle sound"
+        tabindex="0">
         <span class="btn-3d-face">
           <span class="toggle-icon-sound">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+            </svg>
           </span>
           <span class="toggle-icon-mute">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
           </span>
         </span>
       </button>
 
       <button id="loginBtn" class="album-btn secondary-tape" title="Connect Wallet or Session">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5L13 7l-1.5-1.5L10 7M3 13a7 7 0 1 0 14 0 7 7 0 0 0-14 0z"/>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5L13 7l-1.5-1.5L10 7M3 13a7 7 0 1 0 14 0 7 7 0 0 0-14 0z" />
         </svg>
         Log In
       </button>
@@ -3443,7 +3630,8 @@
         <button id="logoutBtn" class="logout-link" title="Logout">↩</button>
       </div>
 
-      <button id="launchPlannerTopBtn" class="album-btn primary-tape launch-btn" title="Open Planner">Launch Planner</button>
+      <button id="launchPlannerTopBtn" class="album-btn primary-tape launch-btn" title="Open Planner">Launch
+        Planner</button>
     </div>
   </header>
 
@@ -3459,8 +3647,7 @@
 
   <!-- Grand Opening Cloud Gate: Spans across the screen, blocking the visualizer at scroll 0, then parting ways on scroll -->
   <div class="opening-cloud-gate" id="cloudGate" aria-hidden="true">
-    <div class="cloud-gate-mist"></div>
-    
+
     <!-- Left Gate Wing -->
     <div class="cloud-gate-wing cloud-gate-left">
       <img class="cloud-gate-item cgi-left-puff" src="assets/cloud.png" alt="">
@@ -3481,8 +3668,8 @@
 
     <!-- Center Keystone Puff bridging the gate seam -->
     <div class="cloud-gate-center">
-      <!--img class="cloud-gate-item cgi-center-puff" src="assets/cloud.png" alt=""-->
-      <!--img class="cloud-gate-item cgi-center-sub" src="assets/cloud.png" alt=""-->
+      <!-- <img class="cloud-gate-item cgi-center-puff" src="assets/cloud.png" alt="">
+      <img class="cloud-gate-item cgi-center-sub" src="assets/cloud.png" alt=""> -->
     </div>
   </div>
 
@@ -3502,48 +3689,58 @@
           </span>
         </div>
         <h1 class="hero-title">
-          A* Pathfinding for Life Goals, Backed by 
+          A* Pathfinding for Life Goals, Backed by
           <span class="ink-hl-wrap">
             <span class="ink-hl-text">Portable Memory</span>
-            <svg class="ink-swash-svg" id="inkSwashSvg" viewBox="0 0 340 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <svg class="ink-swash-svg" id="inkSwashSvg" viewBox="0 0 340 32" fill="none"
+              xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <defs>
                 <filter id="inkBleedFilter" x="-15%" y="-15%" width="130%" height="130%">
                   <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
-                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R"
+                    yChannelSelector="G" />
                 </filter>
               </defs>
               <path id="heroInkCalligraphyPath" filter="url(#inkBleedFilter)"
-                d="M 8 20 C 45 16, 95 24, 150 22 C 210 20, 265 14, 320 10 C 330 9, 335 12, 330 15 C 290 23, 220 27, 160 27 C 100 27, 40 24, 8 20 Z" fill="var(--accent)" />
+                d="M 8 20 C 45 16, 95 24, 150 22 C 210 20, 265 14, 320 10 C 330 9, 335 12, 330 15 C 290 23, 220 27, 160 27 C 100 27, 40 24, 8 20 Z"
+                fill="var(--accent)" />
               <path id="heroInkStrokePath" filter="url(#inkBleedFilter)"
-                d="M 12 18 C 65 24, 145 25, 230 18 C 275 14, 310 11, 328 10"
-                stroke="var(--accent-hover, var(--accent))" stroke-width="3" stroke-linecap="round" fill="none" />
+                d="M 12 18 C 65 24, 145 25, 230 18 C 275 14, 310 11, 328 10" stroke="var(--accent-hover, var(--accent))"
+                stroke-width="3" stroke-linecap="round" fill="none" />
             </svg>
           </span>
         </h1>
         <p class="hero-desc">
-          <strong>Tell GoalStar where you are and where you want to be.</strong>
-          It maps the milestones between, remembers what stalled you before, and routes you around it.
+          <strong>GoalStar maps the path between where you are right now and where you want to be.</strong>
+          Give it your starting point and destination, and it drafts the realistic milestones in between. It estimates
+          what each step costs in time, money, effort, and risk, then highlights the clearest route forward.
         </p>
-
-        <div class="hero-cta-row">
-          <button id="heroLaunchBtn" class="album-btn primary-tape" title="Open the planner and start mapping a goal" style="font-size: 17px; padding: 11px 26px;">Open Interactive Planner</button>
-          <a href="#simulator" class="album-btn secondary-tape" title="Drag the stamina slider to watch A* reroute" style="font-size: 15px;">Try A* In Browser</a>
-          <button id="heroTourBtn" class="album-btn secondary-tape" title="About GoalStar" style="font-size: 15px;">Info</button>
-        </div>
 
         <div class="hero-explain">
           <div>
             <span class="he-label">What it is</span>
-            <p>A visual map where every card is a milestone you can finish and every line is a step in a sensible order.</p>
+            <p>A step-by-step visual map. Every card is an actual milestone you can finish, and every line connects
+              actions in an order that makes sense.</p>
           </div>
           <div>
             <span class="he-label">What it does</span>
-            <p>Prices each step in time, money, effort and risk, then picks the route that fits your real stamina.</p>
+            <p>It runs pathfinding tuned to your daily stamina. When a heavy task risks burnout, it reroutes you through
+              lighter, steady steps so you keep moving.</p>
           </div>
           <div>
             <span class="he-label">Use it for</span>
-            <p>Any goal with more than one way there: a raise, studying abroad, launching a product, getting fit.</p>
+            <p>Any goal with more than one route forward: getting a raise, studying overseas, launching a product,
+              getting fit, or meeting someone.</p>
           </div>
+        </div>
+
+        <div class="hero-cta-row">
+          <button id="heroLaunchBtn" class="album-btn primary-tape" title="Open the planner and start mapping a goal"
+            style="font-size: 17px; padding: 11px 26px;">Open Interactive Planner</button>
+          <a href="#simulator" class="album-btn secondary-tape" title="Drag the stamina slider to watch A* reroute"
+            style="font-size: 15px;">Try A* In Browser</a>
+          <button id="heroTourBtn" class="album-btn secondary-tape" title="About GoalStar"
+            style="font-size: 15px;">Info</button>
         </div>
       </div>
 
@@ -3552,7 +3749,6 @@
         <div class="hanging-photo-card" id="heroPhoto">
           <!-- Cloud Cover Shroud: Blocks the visualizer at scroll 0, parts ways as user scrolls -->
           <div class="cloud-parting-shroud" id="heroCloudShroud" aria-hidden="true">
-            <div class="cloud-shroud-mist"></div>
             <img class="parting-cloud cloud-left-primary" src="assets/cloud.png" alt="">
             <img class="parting-cloud cloud-left-secondary" src="assets/cloud.png" alt="">
             <img class="parting-cloud cloud-right-primary" src="assets/cloud.png" alt="">
@@ -3576,19 +3772,22 @@
           <!-- Polaroid Photo Frame -->
           <div class="polaroid-frame">
             <div class="polaroid-inner-art">
-              <img src="assets/humaaans/webp/hu_stand_24.webp" alt="Life Goal Dreamer" class="polaroid-humaaan-hero" loading="lazy">
+              <img src="assets/humaaans/webp/hu_stand_24.webp" alt="Life Goal Dreamer" class="polaroid-humaaan-hero"
+                loading="lazy">
               <!-- A* Graph Constellation Line Art -->
               <svg class="photo-constellation-svg" id="heroConstellationSvg" viewBox="0 0 240 180" aria-hidden="true">
                 <line x1="40" y1="130" x2="110" y2="70" stroke="#059669" stroke-width="2.5" stroke-dasharray="3 3" />
                 <line x1="110" y1="70" x2="185" y2="40" stroke="#059669" stroke-width="3" />
                 <circle cx="40" cy="130" r="7" fill="#059669" stroke="#1e293b" stroke-width="2" />
                 <circle cx="110" cy="70" r="8" fill="#059669" stroke="#1e293b" stroke-width="2" />
-                <polygon points="185,26 190,38 203,39 193,48 196,61 185,54 174,61 177,48 167,39 180,38" fill="#f59e0b" stroke="#1e293b" stroke-width="2" />
+                <polygon points="185,26 190,38 203,39 193,48 196,61 185,54 174,61 177,48 167,39 180,38" fill="#f59e0b"
+                  stroke="#1e293b" stroke-width="2" />
               </svg>
             </div>
             <!-- Polaroid Chin with Handwritten Annotation -->
             <div class="polaroid-chin">
-              <span class="polaroid-handwriting" id="polaroidCaption">"The shortest path between where you are and where you want to be."</span>
+              <span class="polaroid-handwriting" id="polaroidCaption">"The shortest path between where you are and where
+                you want to be."</span>
               <span class="polaroid-date">OCT 2026 // SUI &amp; WALRUS</span>
             </div>
           </div>
@@ -3602,7 +3801,8 @@
         <!--div class="tech-track-badge">TOTAL RECALL HACKATHON · TRACK 02: SMART AGENTS FOR REAL LIFE</div-->
         <h2 class="tech-stack-title">What it remembers, and how you can prove it</h2>
         <p class="tech-stack-sub">
-          Your history lives in Walrus Memory on Mainnet. Finished milestones become certificates anyone can check against Sui.</p>
+          Your history lives in Walrus Memory on Mainnet. Finished milestones become certificates anyone can check
+          against Sui.</p>
       </div>
 
       <div class="cardboard-stage-wrap" id="cardboardStage">
@@ -3627,7 +3827,7 @@
               </div>
               <h3 class="cb-title">Walrus Memory Engine</h3>
               <div class="cb-meta">Decentralized Portable Storage · @mysten-incubation/memwal</div>
-              
+
               <div class="cb-rule">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
 
               <div class="cb-telemetry-box">
@@ -3638,19 +3838,23 @@
               <ul class="cb-spec-list">
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Portable Memory:</strong> Preserves stamina, cognitive patterns, and pace across web, desktop, and terminal.
+                  <strong>Portable Memory:</strong> Preserves stamina, cognitive patterns, and pace across web, desktop,
+                  and terminal.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Terminal CLI Bridge:</strong> Log blockers while coding (<code>npm run cli</code>); desktop GoalStar recalls them live.
+                  <strong>Terminal CLI Bridge:</strong> Log blockers while coding (<code>npm run cli</code>); desktop
+                  GoalStar recalls them live.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Shareable Snapshots:</strong> Save a whole goal map as a Walrus blob and share it (<code>walrus://...</code>).
+                  <strong>Shareable Snapshots:</strong> Save a whole goal map as a Walrus blob and share it
+                  (<code>walrus://...</code>).
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>48h Escalation Watchdog:</strong> Automatically detects inactive milestones and decomposes them into micro-steps.
+                  <strong>48h Escalation Watchdog:</strong> Automatically detects inactive milestones and decomposes
+                  them into micro-steps.
                 </li>
               </ul>
 
@@ -3687,7 +3891,8 @@
               <ul class="cb-spec-list">
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Anchored:</strong> Each certificate embeds the digest of a live Sui checkpoint, so it cannot be backdated.
+                  <strong>Anchored:</strong> Each certificate embeds the digest of a live Sui checkpoint, so it cannot
+                  be backdated.
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
@@ -3695,7 +3900,8 @@
                 </li>
                 <li>
                   <span class="cb-bullet">▸</span>
-                  <strong>Re-checkable:</strong> Anyone can verify the file, object, transaction and timeline against the chain.
+                  <strong>Re-checkable:</strong> Anyone can verify the file, object, transaction and timeline against
+                  the chain.
                 </li>
               </ul>
 
@@ -3716,7 +3922,8 @@
           <div class="sim-title-wrap">
             <span class="sim-kicker">Interactive Proof of Concept</span>
             <h3 id="simTitle">Try Dynamic A* Rerouting Live</h3>
-            <p class="sim-subtitle">Life is unpredictable. Adjust your stamina, weekly bandwidth, and friction below to watch GoalStar's A* pathfinding engine dynamically recalculate around burnout and risk in real time.</p>
+            <p class="sim-subtitle">Life is unpredictable. Adjust your stamina, weekly bandwidth, and friction below to
+              watch GoalStar's A* pathfinding engine dynamically recalculate around burnout and risk in real time.</p>
           </div>
         </div>
 
@@ -3740,7 +3947,8 @@
               <label for="frictionSlider" class="sim-control-label">Energy / Stamina</label>
               <div class="sim-range-wrap">
                 <div class="slider-fill-track" id="sliderFillTrack" style="width: 80%;"></div>
-                <input type="range" id="frictionSlider" min="1" max="10" value="8" aria-label="Energy and Stamina Level">
+                <input type="range" id="frictionSlider" min="1" max="10" value="8"
+                  aria-label="Energy and Stamina Level">
               </div>
             </div>
             <div class="sim-control-meta">Mental &amp; physical stamina capacity</div>
@@ -3769,10 +3977,12 @@
               <span class="sim-dim-val" id="secondaryValLabel">LOW RISK (3/10)</span>
             </div>
             <div class="sim-control-body">
-              <label for="secondarySlider" id="secondaryLabel" class="sim-control-label">Office Politics / Friction</label>
+              <label for="secondarySlider" id="secondaryLabel" class="sim-control-label">Office Politics /
+                Friction</label>
               <div class="sim-range-wrap">
                 <div class="slider-fill-track" id="secondaryFillTrack" style="width: 30%;"></div>
-                <input type="range" id="secondarySlider" min="1" max="10" value="3" aria-label="Contextual Risk or Cost">
+                <input type="range" id="secondarySlider" min="1" max="10" value="3"
+                  aria-label="Contextual Risk or Cost">
               </div>
             </div>
             <div class="sim-control-meta" id="contextMeta">Management politics &amp; friction threshold</div>
@@ -3783,14 +3993,17 @@
         <div class="sim-canvas" id="simCanvas">
           <svg class="sim-path-svg" id="simPathSvg" aria-hidden="true">
             <defs>
-              <marker id="simArrActive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M0,1.5 L9,5 L0,8.5 L2.5,5 z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1"/>
+              <marker id="simArrActive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M0,1.5 L9,5 L0,8.5 L2.5,5 z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1" />
               </marker>
-              <marker id="simArrMuted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M0,1.5 L9,5 L0,8.5 L2.5,5 z" fill="#9ca3af" stroke="#4b5563" stroke-width="1"/>
+              <marker id="simArrMuted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M0,1.5 L9,5 L0,8.5 L2.5,5 z" fill="#9ca3af" stroke="#4b5563" stroke-width="1" />
               </marker>
-              <marker id="simArrBlocked" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M0,1.5 L9,5 L0,8.5 L2.5,5 z" fill="#ef4444" stroke="#991b1b" stroke-width="1"/>
+              <marker id="simArrBlocked" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M0,1.5 L9,5 L0,8.5 L2.5,5 z" fill="#ef4444" stroke="#991b1b" stroke-width="1" />
               </marker>
             </defs>
             <path id="simPathSprintIn" class="sim-route-line active" />
@@ -3855,20 +4068,23 @@
                 <span class="ledger-path-name">PATH A · DIRECT PUSH</span>
                 <span class="ledger-cost-tag" id="ledgerCostA">f(n) = 14 · OPTIMAL ROUTE</span>
               </div>
-              <div class="ledger-card-desc" id="ledgerDescA">Direct high-effort push. Selected because energy and time bandwidth comfortably absorb the action cost.</div>
+              <div class="ledger-card-desc" id="ledgerDescA">Direct high-effort push. Selected because energy and time
+                bandwidth comfortably absorb the action cost.</div>
             </div>
             <div class="ledger-card" id="ledgerCardB">
               <div class="ledger-card-top">
                 <span class="ledger-path-name">PATH B · LEVERAGE PIVOT</span>
                 <span class="ledger-cost-tag" id="ledgerCostB">f(n) = 22 · STANDBY BACKUP</span>
               </div>
-              <div class="ledger-card-desc" id="ledgerDescB">Low-friction compound consistency. Automatically activates if fatigue or workplace friction rises.</div>
+              <div class="ledger-card-desc" id="ledgerDescB">Low-friction compound consistency. Automatically activates
+                if fatigue or workplace friction rises.</div>
             </div>
           </div>
           <div class="ledger-verdict">
             <span class="verdict-dot" id="verdictDot"></span>
             <div class="verdict-text" id="simFeedback">
-              <strong>High Energy Route Active:</strong> Direct action yields the fastest trajectory when stamina and available hours are plentiful. Drag stamina or time down to simulate burnout!
+              <strong>High Energy Route Active:</strong> Direct action yields the fastest trajectory when stamina and
+              available hours are plentiful. Drag stamina or time down to simulate burnout!
             </div>
           </div>
         </div>
@@ -3887,13 +4103,14 @@
       <div class="journey-track" id="journeyTrack">
         <!-- SVG Track for Traveling Kinetic Arrow (Desktop) -->
         <svg class="journey-svg-track" id="journeySvgTrack">
-          <path id="journeySvgPath" d="" fill="none" stroke="rgba(42, 45, 62, 0.14)" stroke-width="3" stroke-dasharray="6 6"/>
-          <path id="journeyActivePath" d="" fill="none" stroke="var(--accent)" stroke-width="4"/>
+          <path id="journeySvgPath" d="" fill="none" stroke="rgba(42, 45, 62, 0.14)" stroke-width="3"
+            stroke-dasharray="6 6" />
+          <path id="journeyActivePath" d="" fill="none" stroke="var(--accent)" stroke-width="4" />
         </svg>
 
         <div class="traveling-arrow" id="travelingArrow">
           <svg viewBox="0 0 24 24" fill="var(--accent)">
-            <polygon points="12,2 22,22 12,17 2,22"/>
+            <polygon points="12,2 22,22 12,17 2,22" />
           </svg>
         </div>
 
@@ -3905,26 +4122,31 @@
                 <h3 class="uc-role">The Career Climber</h3>
               </div>
               <span class="uc-status-tag">Negotiating a $20k Raise or Promotion</span>
-              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · Energy-Aware Routing</span>
+              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · Energy-Aware
+                Routing</span>
             </div>
             <div class="uc-content-flex">
               <div class="uc-details">
                 <div class="uc-bullet-item">
                   <span class="bullet-tag hurdle">The Trap</span>
-                  <p><strong>The 60-hour work week:</strong> Grinding through endless overtime on low-visibility tasks, hoping management notices before exhaustion sets in.</p>
+                  <p><strong>The 60-hour work week:</strong> Grinding through endless overtime on low-visibility tasks,
+                    hoping management notices before exhaustion sets in.</p>
                 </div>
                 <div class="uc-bullet-item">
                   <span class="bullet-tag fix">A* Route</span>
-                  <p><strong>High-leverage visibility pivot:</strong> When stamina drops, GoalStar shifts focus to documenting measurable business impact, weekly 1-on-1 alignment, and market salary data.</p>
+                  <p><strong>High-leverage visibility pivot:</strong> When stamina drops, GoalStar shifts focus to
+                    documenting measurable business impact, weekly 1-on-1 alignment, and market salary data.</p>
                 </div>
               </div>
               <div class="uc-humaaan-frame">
-                <img src="assets/humaaans/webp/hu_stand_16.webp" alt="Professional presenting" class="uc-humaaan-img" loading="lazy">
+                <img src="assets/humaaans/webp/hu_stand_16.webp" alt="Professional presenting" class="uc-humaaan-img"
+                  loading="lazy">
               </div>
             </div>
             <div class="uc-card-footer">
               <span class="uc-stat-pill">+$20k Secured · Zero Weekend Burnout</span>
-              <button class="album-btn scenario-launch-btn" data-scenario="career" title="Simulate the career progression route">Simulate Route</button>
+              <button class="album-btn scenario-launch-btn" data-scenario="career"
+                title="Simulate the career progression route">Simulate Route</button>
             </div>
           </article>
         </div>
@@ -3937,26 +4159,31 @@
                 <h3 class="uc-role">The Global Dreamer</h3>
               </div>
               <span class="uc-status-tag">Moving or Studying Abroad</span>
-              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · 48h Escalation Watchdog</span>
+              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · 48h Escalation
+                Watchdog</span>
             </div>
             <div class="uc-content-flex">
               <div class="uc-details">
                 <div class="uc-bullet-item">
                   <span class="bullet-tag hurdle">The Trap</span>
-                  <p><strong>Bureaucracy and paperwork freeze:</strong> Drowning in visa criteria, embassy requirements, and scholarship essays for weeks without taking action.</p>
+                  <p><strong>Bureaucracy and paperwork freeze:</strong> Drowning in visa criteria, embassy requirements,
+                    and scholarship essays for weeks without taking action.</p>
                 </div>
                 <div class="uc-bullet-item">
                   <span class="bullet-tag fix">A* Route</span>
-                  <p><strong>Automatic micro-decomposition:</strong> Inactive application steps fracture into 15-minute concrete tasks (e.g., scan passport, draft personal statement intro).</p>
+                  <p><strong>Automatic micro-decomposition:</strong> Inactive application steps fracture into 15-minute
+                    concrete tasks (e.g., scan passport, draft personal statement intro).</p>
                 </div>
               </div>
               <div class="uc-humaaan-frame">
-                <img src="assets/humaaans/webp/hu_stand_11.webp" alt="Student traveling abroad" class="uc-humaaan-img" loading="lazy">
+                <img src="assets/humaaans/webp/hu_stand_11.webp" alt="Student traveling abroad" class="uc-humaaan-img"
+                  loading="lazy">
               </div>
             </div>
             <div class="uc-card-footer">
               <span class="uc-stat-pill">100% Papers Submitted · No Missed Deadlines</span>
-              <button class="album-btn scenario-launch-btn" data-scenario="abroad" title="Simulate the overseas application route">Simulate Route</button>
+              <button class="album-btn scenario-launch-btn" data-scenario="abroad"
+                title="Simulate the overseas application route">Simulate Route</button>
             </div>
           </article>
         </div>
@@ -3969,26 +4196,31 @@
                 <h3 class="uc-role">The Builder &amp; Maker</h3>
               </div>
               <span class="uc-status-tag">Shipping a Side Project or Product</span>
-              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · Friction Recalculation</span>
+              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · Friction
+                Recalculation</span>
             </div>
             <div class="uc-content-flex">
               <div class="uc-details">
                 <div class="uc-bullet-item">
                   <span class="bullet-tag hurdle">The Trap</span>
-                  <p><strong>The 2-week architecture rabbit hole:</strong> Spending weeks configuring complex servers and databases before testing if anyone actually wants the product.</p>
+                  <p><strong>The 2-week architecture rabbit hole:</strong> Spending weeks configuring complex servers
+                    and databases before testing if anyone actually wants the product.</p>
                 </div>
                 <div class="uc-bullet-item">
                   <span class="bullet-tag fix">A* Route</span>
-                  <p><strong>MVP fast-track reroute:</strong> Detects repetitive setup blocks and shifts the path to a simple working prototype and instant customer feedback.</p>
+                  <p><strong>MVP fast-track reroute:</strong> Detects repetitive setup blocks and shifts the path to a
+                    simple working prototype and instant customer feedback.</p>
                 </div>
               </div>
               <div class="uc-humaaan-frame">
-                <img src="assets/humaaans/webp/hu_sit_1.webp" alt="Creator launching product" class="uc-humaaan-img" loading="lazy">
+                <img src="assets/humaaans/webp/hu_sit_1.webp" alt="Creator launching product" class="uc-humaaan-img"
+                  loading="lazy">
               </div>
             </div>
             <div class="uc-card-footer">
               <span class="uc-stat-pill">Shipped in 3 Days · First Paying Customers</span>
-              <button class="album-btn scenario-launch-btn" data-scenario="saas" title="Simulate the product launch route">Simulate Route</button>
+              <button class="album-btn scenario-launch-btn" data-scenario="saas"
+                title="Simulate the product launch route">Simulate Route</button>
             </div>
           </article>
         </div>
@@ -4001,26 +4233,31 @@
                 <h3 class="uc-role">The Overwhelmed Mind</h3>
               </div>
               <span class="uc-status-tag">Breaking Free from To-Do List Paralysis</span>
-              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · Anti-Shame Pathing</span>
+              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Walrus Memory · Anti-Shame
+                Pathing</span>
             </div>
             <div class="uc-content-flex">
               <div class="uc-details">
                 <div class="uc-bullet-item">
                   <span class="bullet-tag hurdle">The Trap</span>
-                  <p><strong>To-do list freeze:</strong> 25 competing items cause overwhelm. Missing 2 days triggers shame, self-criticism, and abandoning the goal.</p>
+                  <p><strong>To-do list freeze:</strong> 25 competing items cause overwhelm. Missing 2 days triggers
+                    shame, self-criticism, and abandoning the goal.</p>
                 </div>
                 <div class="uc-bullet-item">
                   <span class="bullet-tag fix">A* Route</span>
-                  <p><strong>Single-step clarity:</strong> Hides future complexity and surfaces only the single highest-value action for today, resetting friction without guilt.</p>
+                  <p><strong>Single-step clarity:</strong> Hides future complexity and surfaces only the single
+                    highest-value action for today, resetting friction without guilt.</p>
                 </div>
               </div>
               <div class="uc-humaaan-frame">
-                <img src="assets/humaaans/webp/hu_sit_6.webp" alt="Individual meditating" class="uc-humaaan-img" loading="lazy">
+                <img src="assets/humaaans/webp/hu_sit_6.webp" alt="Individual meditating" class="uc-humaaan-img"
+                  loading="lazy">
               </div>
             </div>
             <div class="uc-card-footer">
               <span class="uc-stat-pill">Zero-Shame Recalculation · Steady Flow</span>
-              <button class="album-btn scenario-launch-btn" data-scenario="adhd" title="Simulate the anti-overwhelm route">Simulate Route</button>
+              <button class="album-btn scenario-launch-btn" data-scenario="adhd"
+                title="Simulate the anti-overwhelm route">Simulate Route</button>
             </div>
           </article>
         </div>
@@ -4033,45 +4270,55 @@
                 <h3 class="uc-role">Map Your Own Goal</h3>
               </div>
               <span class="uc-status-tag">Any Real-Life Destination</span>
-              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Dynamic A* · Tailored To Your Energy</span>
+              <span class="uc-tech-pill walrus"><span class="badge-live-dot"></span> Dynamic A* · Tailored To Your
+                Energy</span>
             </div>
             <div class="uc-content-flex">
               <div class="uc-details uc-custom-details">
-                <p class="uc-custom-intro">Have a real goal in mind? Whether it's moving abroad, getting a promotion, meeting someone, or launching a product — GoalStar plots the realistic milestones and prices the friction so you don't quit halfway.</p>
+                <p class="uc-custom-intro">Have a real goal in mind? Whether it's moving abroad, getting a promotion,
+                  meeting someone, or launching a product — GoalStar plots the realistic milestones and prices the
+                  friction so you don't quit halfway.</p>
                 <div class="custom-goal-form">
                   <label for="customGoalInput" class="custom-goal-label">Where do you want to be?</label>
                   <div class="custom-goal-input-wrap">
-                    <input type="text" id="customGoalInput" class="custom-goal-input" placeholder="e.g. Get a $20k raise, Move to Japan, Launch my MVP..." />
-                    <button type="button" id="card5LaunchBtn" class="album-btn primary-tape custom-goal-submit">Map My Goal &rarr;</button>
+                    <input type="text" id="customGoalInput" class="custom-goal-input"
+                      placeholder="e.g. Get a $20k raise, Move to Japan, Launch my MVP..." />
+                    <button type="button" id="card5LaunchBtn" class="album-btn primary-tape custom-goal-submit">Map My
+                      Goal &rarr;</button>
                   </div>
                   <div class="custom-goal-chips" id="customGoalChips">
                     <span class="goal-chip" data-goal="Get a $20k raise and promotion">💼 $20k Raise</span>
                     <span class="goal-chip" data-goal="Move and study abroad in Europe">✈️ Study Abroad</span>
                     <span class="goal-chip" data-goal="Launch my product MVP and get 10 users">🚀 Launch MVP</span>
                     <span class="goal-chip" data-goal="Get fit and run a 10k without injury">🏃 Run 10k</span>
-                    <span class="goal-chip" data-goal="Meet someone and build a serious relationship">❤️ Meet Someone</span>
+                    <span class="goal-chip" data-goal="Meet someone and build a serious relationship">❤️ Meet
+                      Someone</span>
                   </div>
                 </div>
               </div>
               <div class="uc-humaaan-frame">
-                <img src="assets/humaaans/webp/hu_stand_2.webp" alt="Individual planning future" class="uc-humaaan-img" loading="lazy">
+                <img src="assets/humaaans/webp/hu_stand_2.webp" alt="Individual planning future" class="uc-humaaan-img"
+                  loading="lazy">
               </div>
             </div>
             <div class="uc-card-footer">
               <span class="uc-stat-pill">Personalized Milestone Graph in 1 Click</span>
-              <button class="album-btn scenario-launch-btn" data-scenario="custom" title="See how GoalStar builds your plan">See How It Works</button>
+              <button class="album-btn scenario-launch-btn" data-scenario="custom"
+                title="See how GoalStar builds your plan">See How It Works</button>
             </div>
           </article>
-        </div></div>
+        </div>
+      </div>
 
-        <!-- Centered Destination Terminal (Middle X Position Underneath Last Card) -->
-        <div class="journey-terminal" id="journeyTerminal">
-          <div class="terminal-circle-target" id="terminalCircleTarget">
-            <div class="terminal-core-circle"></div>
-          </div>
-          <span class="terminal-badge">Goal Reached · Path Completed</span>
-          <p class="terminal-sub">Dynamic A* Path Concluded</p>
-        </div> </div>
+      <!-- Centered Destination Terminal (Middle X Position Underneath Last Card) -->
+      <div class="journey-terminal" id="journeyTerminal">
+        <div class="terminal-circle-target" id="terminalCircleTarget">
+          <div class="terminal-core-circle"></div>
+        </div>
+        <span class="terminal-badge">Goal Reached · Path Completed</span>
+        <p class="terminal-sub">Dynamic A* Path Concluded</p>
+      </div>
+      </div>
     </section>
   </main>
 
@@ -4079,7 +4326,7 @@
   <div class="scenario-modal" id="scenarioModal" hidden>
     <div class="scenario-modal-box">
       <button type="button" class="close-modal-btn" id="closeScenarioBtn" aria-label="Close">&times;</button>
-      
+
       <div class="scenario-modal-head">
         <div class="scenario-step-indicator">
           <div class="step-pill active" id="sp1"></div>
@@ -4089,10 +4336,16 @@
           <div class="step-pill" id="sp5"></div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span id="scenarioStepNum" style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:800; color:var(--accent);">STAGE 1</span>
-          <span id="scenarioScenarioTag" style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:700; color:var(--ink-muted);">PATH WALKTHROUGH</span>
+          <span id="scenarioStepNum"
+            style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:800; color:var(--accent);">STAGE
+            1</span>
+          <span id="scenarioScenarioTag"
+            style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:700; color:var(--ink-muted);">PATH
+            WALKTHROUGH</span>
         </div>
-        <h3 id="scenarioStepTitle" style="font-family:'Playfair Display', serif; font-size:22px; margin:4px 0 0; color:var(--ink);">Where You Are: Grounding the Goal</h3>
+        <h3 id="scenarioStepTitle"
+          style="font-family:'Playfair Display', serif; font-size:22px; margin:4px 0 0; color:var(--ink);">Where You
+          Are: Grounding the Goal</h3>
       </div>
 
       <div class="scenario-stage-content" id="scenarioStageContent">
@@ -4112,15 +4365,19 @@
   <!-- Login Modal Dialog (Clean SVG, No Emojis) -->
   <div class="login-dialog" id="loginDialog" hidden>
     <div class="login-box modal-card" style="max-width:480px; width:92vw;">
-      <button type="button" class="close-modal-btn close-login-dlg" id="closeLoginDlg" aria-label="Close">&times;</button>
+      <button type="button" class="close-modal-btn close-login-dlg" id="closeLoginDlg"
+        aria-label="Close">&times;</button>
       <div class="modal-head">
         <div>
-          <span style="font-family:'Space Grotesk',monospace; font-size:10.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.8px;">Walrus Memory &amp; Identity</span>
+          <span
+            style="font-family:'Space Grotesk',monospace; font-size:10.5px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:0.8px;">Walrus
+            Memory &amp; Identity</span>
           <h3 style="margin:2px 0 0; font-size:19px;">Connect &amp; Sync Portable Memory</h3>
         </div>
       </div>
       <p class="muted small" style="margin-bottom: 14px; font-size:12.5px; line-height:1.4; color:var(--ink-soft);">
-        Your stamina profile, completed milestones, and friction rules follow you across sessions and the CLI via Walrus Mainnet.
+        Your stamina profile, completed milestones, and friction rules follow you across sessions and the CLI via Walrus
+        Mainnet.
       </p>
 
       <!-- Active Profile Card when logged in -->
@@ -4139,7 +4396,9 @@
 
       <div class="login-options">
         <div class="login-option" id="loginGuestOpt">
-          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg></div>
           <div class="opt-info">
             <h4>One-Click Guest Profile</h4>
             <p>Instant access with local persistence &amp; Walrus cloud bridge.</p>
@@ -4148,7 +4407,9 @@
         </div>
 
         <div class="login-option" id="loginWalletOpt">
-          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0M2 18c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0"/></svg></div>
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0M2 18c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7 0" />
+            </svg></div>
           <div class="opt-info">
             <h4>Connect Sui Web3 Wallet</h4>
             <p>Suiet, Slush, Ethos or browser Sui extension.</p>
@@ -4157,7 +4418,13 @@
         </div>
 
         <div class="login-option" id="loginWalrusOpt">
-          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/><circle cx="5" cy="8" r="3"/><circle cx="19" cy="8" r="3"/><circle cx="8" cy="19" r="2.5"/><circle cx="16" cy="19" r="2.5"/></svg></div>
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="5" cy="8" r="3" />
+              <circle cx="19" cy="8" r="3" />
+              <circle cx="8" cy="19" r="2.5" />
+              <circle cx="16" cy="19" r="2.5" />
+            </svg></div>
           <div class="opt-info">
             <h4>Walrus Account ID</h4>
             <p>Decentralized memory namespace.</p>
@@ -4167,12 +4434,17 @@
         </div>
 
         <div class="login-option email-opt" id="loginEmailOpt">
-          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div class="opt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg></div>
           <div class="opt-info">
             <h4>Email Account Backup</h4>
             <p>Save and recover your graph across devices.</p>
             <div style="display:flex; gap:6px; margin-top:6px;">
-              <input type="email" id="loginEmailInput" placeholder="e.g. alex@example.com" style="flex:1; padding:6px 10px; font-size:12.5px; border:1px solid var(--border); border-radius:6px; background:var(--panel-2); color:var(--ink);" />
+              <input type="email" id="loginEmailInput" placeholder="e.g. alex@example.com"
+                style="flex:1; padding:6px 10px; font-size:12.5px; border:1px solid var(--border); border-radius:6px; background:var(--panel-2); color:var(--ink);" />
               <button id="loginEmailBtn" class="mini-btn secondary">Save</button>
             </div>
           </div>
@@ -4186,7 +4458,9 @@
     <div class="home-tour-content">
       <button id="closeHomeTourBtn" class="close-modal-btn" aria-label="Close">&times;</button>
       <div class="modal-head">
-        <span id="homeTourStepCount" style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:800; color:var(--accent);">Step 1 of 4</span>
+        <span id="homeTourStepCount"
+          style="font-family:'Space Grotesk', monospace; font-size:11px; font-weight:800; color:var(--accent);">Step 1
+          of 4</span>
         <h3 id="homeTourTitle" style="margin-top:4px;">How GoalStar Works</h3>
       </div>
       <div id="homeTourBody" style="font-size:15px; line-height:1.6; color:var(--ink-soft); min-height:90px;"></div>
@@ -4242,12 +4516,12 @@
     if (glowSwitch) {
       glowSwitch.addEventListener('click', () => {
         const nextState = !document.body.classList.contains('arrow-glow');
-        try { localStorage.setItem('goalstar_arrow_glow', nextState ? 'true' : 'false'); } catch (e) {}
+        try { localStorage.setItem('goalstar_arrow_glow', nextState ? 'true' : 'false'); } catch (e) { }
         syncGlowState();
       });
     }
 
-// themeSwitch handled centrally by ThemeManager
+    // themeSwitch handled centrally by ThemeManager
     initTooltips();
     sound.attachListeners();
     auth.init();
@@ -4284,7 +4558,7 @@
         link.href = `/?cert=tatum://${certificates[0].jobId}`;
         link.hidden = false;
       }
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Launch action
     function launchPlanner(targetGoal = null) {
@@ -4336,11 +4610,11 @@
             pass,
             fA: Math.max(10, costA),
             fB: Math.max(10, costB),
-            descA: pass 
-              ? 'Direct push is feasible: stamina (≥6/10) and time (≥24h) absorb high overtime costs.' 
+            descA: pass
+              ? 'Direct push is feasible: stamina (≥6/10) and time (≥24h) absorb high overtime costs.'
               : 'Pruned: Overtime exceeds energy budget or office friction is too toxic for pure grind.',
-            descB: !pass 
-              ? 'Dynamically chosen: Strategic 1-on-1s and documented metrics advance your promotion without burnout.' 
+            descB: !pass
+              ? 'Dynamically chosen: Strategic 1-on-1s and documented metrics advance your promotion without burnout.'
               : 'Standby route: Slower baseline momentum compared to an aggressive direct sprint.'
           };
         },
@@ -4375,11 +4649,11 @@
             pass,
             fA: Math.max(12, costA),
             fB: Math.max(10, costB),
-            descA: pass 
-              ? 'Full build is viable: Sufficient runway (≥$2k) and bandwidth allow bespoke architecture.' 
+            descA: pass
+              ? 'Full build is viable: Sufficient runway (≥$2k) and bandwidth allow bespoke architecture.'
               : 'Pruned: Complex architecture rabbit hole risks running out of runway before launching.',
-            descB: !pass 
-              ? 'Dynamically chosen: 3-day MVP and waitlist eliminates months of setup stress and tests real demand.' 
+            descB: !pass
+              ? 'Dynamically chosen: 3-day MVP and waitlist eliminates months of setup stress and tests real demand.'
               : 'Standby route: Fast prototype ready if developer fatigue or budget pressure emerges.'
           };
         },
@@ -4413,11 +4687,11 @@
             pass,
             fA: Math.max(12, costA),
             fB: Math.max(10, costB),
-            descA: pass 
-              ? 'Wide application net viable: Timeline (≥5 mo) and stamina support applying to multiple schools.' 
+            descA: pass
+              ? 'Wide application net viable: Timeline (≥5 mo) and stamina support applying to multiple schools.'
               : 'Pruned: Bureaucracy overload and tight timeline create severe procrastination freeze.',
-            descB: !pass 
-              ? 'Dynamically chosen: Concentrated effort on top 2 institutions with 20m daily micro-sessions.' 
+            descB: !pass
+              ? 'Dynamically chosen: Concentrated effort on top 2 institutions with 20m daily micro-sessions.'
               : 'Standby route: Micro-application route available if exam fatigue or essay overwhelm occurs.'
           };
         },
@@ -4451,11 +4725,11 @@
             pass,
             fA: Math.max(10, costA),
             fB: Math.max(10, costB),
-            descA: pass 
-              ? 'High social exploration viable: Social battery (≥6/10) easily handles multiple events per week.' 
+            descA: pass
+              ? 'High social exploration viable: Social battery (≥6/10) easily handles multiple events per week.'
               : 'Pruned: Social exhaustion and high friction make crowded mixers draining and counterproductive.',
-            descB: !pass 
-              ? 'Dynamically chosen: Relaxed weekly hobby clubs and 1-on-1 coffee chats build genuine rapport.' 
+            descB: !pass
+              ? 'Dynamically chosen: Relaxed weekly hobby clubs and 1-on-1 coffee chats build genuine rapport.'
               : 'Standby route: Slower relaxed pace ready if social battery runs low.'
           };
         },
@@ -4804,12 +5078,9 @@
 
     function updateInkScroll() {
       if (!inkSwashSvg) return;
-      const rect = inkSwashSvg.getBoundingClientRect();
-      const winH = window.innerHeight || 800;
-      const triggerStart = winH * 0.92;
-      const triggerEnd = winH * 0.35;
-      const p = (triggerStart - rect.top) / (triggerStart - triggerEnd);
-      setInkProgress(Math.min(1, Math.max(0, p)));
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      const p = Math.min(1, Math.max(0, scrollY / 160));
+      setInkProgress(p);
     }
 
     let totalPathLength = 0;
@@ -4863,8 +5134,8 @@
 
       let rail = leftX;
       let d = `M ${boxes[0].left} ${startY}` +
-              ` L ${leftX + r} ${startY}` +
-              ` Q ${leftX} ${startY} ${leftX} ${startY + r}`;
+        ` L ${leftX + r} ${startY}` +
+        ` Q ${leftX} ${startY} ${leftX} ${startY + r}`;
 
       // Between two cards the route crosses over as a soft S that starts and
       // ends going straight down, so there is no kink or bump at the turn.
@@ -4880,7 +5151,7 @@
       // rail is the LEFT margin beside the last card: run down its side, then
       // sweep right into the centred goal terminal.
       d += ` L ${rail} ${bottomY}` +
-           ` C ${rail} ${bottomY + 90}, ${term.x - 150} ${term.y}, ${term.x - 4} ${term.y}`;
+        ` C ${rail} ${bottomY + 90}, ${term.x - 150} ${term.y}, ${term.x - 4} ${term.y}`;
 
       svgPath.setAttribute('d', d);
       if (activePath) activePath.setAttribute('d', d);
@@ -4942,7 +5213,7 @@
           if (cls) cls.style.transform = `translate3d(-${(p * partDist * 0.85).toFixed(1)}px, ${(p * 35).toFixed(1)}px, 0) scale(${1 + p * 0.1}) rotate(-${(p * 9).toFixed(1)}deg)`;
           if (crp) crp.style.transform = `translate3d(${(p * partDist * 1.1).toFixed(1)}px, -${(p * 40).toFixed(1)}px, 0) scaleX(-1) scale(${1 + p * 0.15}) rotate(${(p * 14).toFixed(1)}deg)`;
           if (crs) crs.style.transform = `translate3d(${(p * partDist * 0.85).toFixed(1)}px, ${(p * 45).toFixed(1)}px, 0) scaleX(-1) scale(${1 + p * 0.1}) rotate(${(p * 9).toFixed(1)}deg)`;
-          if (ccp) ccp.style.transform = `translate(-50%, -50%) scale(${(1 - p * 0.7).toFixed(2)})`;
+          if (ccp) ccp.style.transform = `translate(-50%, -50%) translate3d(-${(p * partDist * 2.1).toFixed(1)}px, -${(p * 45).toFixed(1)}px, 0) scale(${(1 - p * 0.7).toFixed(2)})`;
           if (mist) mist.style.opacity = ((1 - p) * 0.95).toFixed(3);
         }
       }
@@ -5016,7 +5287,7 @@
       cards.forEach(c => {
         if (!c.el) return;
         const rect = c.el.getBoundingClientRect();
-        
+
         // Entrance progress: 0 when entering bottom of viewport, 1.0 when settled
         const enterStart = winH * 1.05;
         const enterEnd = winH * 0.55;
@@ -5053,16 +5324,16 @@
         const tr = track.getBoundingClientRect();
         const pathLen = totalPathLength || svgPath.getTotalLength();
 
-          const card1El = document.getElementById('card1');
-          const card5El = document.getElementById('card5');
-          const c1r = card1El ? card1El.getBoundingClientRect() : tr;
-          const endBtn = document.getElementById('card5LaunchBtn') || card5El;
-          const terminalTarget = document.getElementById('terminalCircleTarget');
-          const ter = terminalTarget ? terminalTarget.getBoundingClientRect() : er;
-          const endScrollY = window.scrollY + ter.top - winH * 0.65;
-          var startScrollY2 = window.scrollY + c1r.top - winH * 0.65 - 100;
-          var progress2 = Math.max(0, Math.min(1, (window.scrollY - startScrollY2) / (endScrollY - startScrollY2)));
-          travelingArrow.style.opacity = Math.min(1, progress2*10)
+        const card1El = document.getElementById('card1');
+        const card5El = document.getElementById('card5');
+        const c1r = card1El ? card1El.getBoundingClientRect() : tr;
+        const endBtn = document.getElementById('card5LaunchBtn') || card5El;
+        const terminalTarget = document.getElementById('terminalCircleTarget');
+        const ter = terminalTarget ? terminalTarget.getBoundingClientRect() : er;
+        const endScrollY = window.scrollY + ter.top - winH * 0.65;
+        var startScrollY2 = window.scrollY + c1r.top - winH * 0.65 - 100;
+        var progress2 = Math.max(0, Math.min(1, (window.scrollY - startScrollY2) / (endScrollY - startScrollY2)));
+        travelingArrow.style.opacity = Math.min(1, progress2 * 10)
 
         if (pathLen > 0) {
           const card1El = document.getElementById('card1');
@@ -5150,8 +5421,8 @@
         const viewCenter = winH / 2;
         const distFromCenter = Math.abs(stageCenter - viewCenter);
         // Rotate in and cover Walrus X Tatum when the section is centered
-        const isCentered = distFromCenter < (winH * 0.5) || scrollY>sr.bottom //sr.top < winH * 0.78 && sr.bottom > winH * 0.22;
-        
+        const isCentered = distFromCenter < (winH * 0.5) || scrollY > sr.bottom //sr.top < winH * 0.78 && sr.bottom > winH * 0.22;
+
         stage.classList.toggle('cards-entered', isCentered);
       }
 
@@ -5634,7 +5905,7 @@
     }
 
     function stopHomeTourBounce() {
-      try { localStorage.setItem('goalstar_tour_clicked', 'true'); } catch(e) {}
+      try { localStorage.setItem('goalstar_tour_clicked', 'true'); } catch (e) { }
       document.querySelectorAll('.tour-bounce-btn').forEach(b => b.classList.remove('tour-bounce-btn'));
     }
     if (localStorage.getItem('goalstar_tour_clicked') === 'true' || localStorage.getItem('goalstar_walkthrough_completed') === 'true') {
@@ -5770,4 +6041,5 @@
     });
   </script>
 </body>
+
 </html>
