@@ -27,3 +27,9 @@ data/blobs.json
 data/templates.json
 
 .vercel
+
+# Video scripts & launch kits
+LAUNCH.md
+launch.md
+script.md
+SCRIPT.md
